@@ -1,0 +1,294 @@
+/* ===== 全局 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --text: #e0e0e0;
+  --text-secondary: #8888aa;
+  --work-color: #e94560;
+  --break-color: #4ecca3;
+  --ring-bg: #2a2a4a;
+  --btn-hover: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  background: transparent;
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ===== 标题栏 ===== */
+#titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface);
+  -webkit-app-region: drag;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-controls button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.titlebar-controls button:hover {
+  background: var(--btn-hover);
+  color: var(--text);
+}
+
+#btn-close:hover {
+  background: var(--work-color);
+  color: #fff;
+}
+
+#btn-pin {
+  font-size: 12px;
+}
+
+#btn-pin.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+
+/* ===== 主体容器 ===== */
+#container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 8px 24px 32px;
+  background: var(--bg);
+  border-radius: 0 0 16px 16px;
+}
+
+/* ===== 模式标签 ===== */
+#mode-label {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 6px 18px;
+  border-radius: 20px;
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--work-color);
+  transition: all 0.3s;
+}
+
+#mode-label.break {
+  background: rgba(78, 204, 163, 0.15);
+  color: var(--break-color);
+}
+
+/* ===== 模式选择按钮 ===== */
+#mode-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--ring-bg);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.mode-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text);
+}
+
+.mode-btn.active {
+  border-color: var(--work-color);
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--work-color);
+  font-weight: 500;
+}
+
+.mode-btn.active[data-mode="shortBreak"],
+.mode-btn.active[data-mode="longBreak"] {
+  border-color: var(--break-color);
+  background: rgba(78, 204, 163, 0.15);
+  color: var(--break-color);
+}
+
+/* ===== 环形进度条 ===== */
+#progress-ring {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+#progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+#ring-bg {
+  fill: none;
+  stroke: var(--ring-bg);
+  stroke-width: 8;
+}
+
+#ring-fg {
+  fill: none;
+  stroke: var(--work-color);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 552.92;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.4s linear, stroke 0.3s;
+}
+
+#ring-fg.break {
+  stroke: var(--break-color);
+}
+
+#timer-display {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+/* ===== 番茄计数点 ===== */
+#pomodoro-dots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 12px;
+}
+
+#pomodoro-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ring-bg);
+  transition: all 0.3s;
+}
+
+#pomodoro-dots .dot.filled {
+  background: var(--work-color);
+  box-shadow: 0 0 8px rgba(233, 69, 96, 0.4);
+}
+
+.round-badge {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-left: 2px;
+  font-weight: 500;
+}
+
+/* ===== 控制按钮 ===== */
+#controls {
+  display: flex;
+  gap: 12px;
+}
+
+#controls button {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 28px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--work-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: scale(1.03);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary.pause {
+  background: #f0a500;
+}
+
+#btn-skip {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--text-secondary) !important;
+}
+
+#btn-skip:hover {
+  color: var(--text);
+  border-color: var(--text) !important;
+}
+
+#btn-skip.break-mode {
+  border-color: var(--break-color) !important;
+  color: var(--break-color);
+}
+
+#btn-skip.break-mode:hover {
+  filter: brightness(1.2);
+}
+
+#btn-reset {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--text-secondary) !important;
+}
+
+#btn-reset:hover {
+  color: var(--text);
+  border-color: var(--text) !important;
+}

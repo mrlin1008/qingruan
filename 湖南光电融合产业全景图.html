@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>湖南省光电融合产业全景图</title>
+<style>
+:root {
+  --bg-dark: #0a0e27;
+  --bg-card: #121835;
+  --bg-card-hover: #1a2348;
+  --accent-cyan: #00e5ff;
+  --accent-blue: #3d7eff;
+  --accent-purple: #b347ff;
+  --accent-pink: #ff3d9a;
+  --accent-green: #00ffa3;
+  --accent-orange: #ff9c40;
+  --accent-yellow: #ffd93d;
+  --text-primary: #ffffff;
+  --text-secondary: #aab8e0;
+  --text-muted: #6b7a9f;
+  --border-glow: rgba(0, 229, 255, 0.3);
+  --gradient-1: linear-gradient(135deg, #0a0e27, #1a0a3e, #0d2b4f);
+  --gradient-card: linear-gradient(160deg, rgba(18,24,53,0.95), rgba(10,14,39,0.98));
+  --glow-cyan: 0 0 20px rgba(0, 229, 255, 0.15);
+  --glow-purple: 0 0 20px rgba(179, 71, 255, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  background: var(--gradient-1);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 背景粒子动画 */
+.particle-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0,229,255,0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(179,71,255,0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(61,126,255,0.05) 0%, transparent 40%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+/* === Header === */
+.header {
+  text-align: center;
+  padding: 50px 0 30px;
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+}
+
+.header-subtitle {
+  font-size: 14px;
+  letter-spacing: 8px;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.header h1 {
+  font-size: 42px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00e5ff 0%, #b347ff 50%, #ff3d9a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+}
+
+.header-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.header-meta span {
+  color: var(--accent-cyan);
+  margin: 0 8px;
+}
+
+/* === KPI 数据卡片 === */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin: 30px 0;
+}
+
+.kpi-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.kpi-card:nth-child(1)::before { background: var(--accent-cyan); }
+.kpi-card:nth-child(2)::before { background: var(--accent-purple); }
+.kpi-card:nth-child(3)::before { background: var(--accent-pink); }
+.kpi-card:nth-child(4)::before { background: var(--accent-green); }
+.kpi-card:nth-child(5)::before { background: var(--accent-orange); }
+
+.kpi-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-3px);
+  box-shadow: var(--glow-cyan);
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 6px 0;
+}
+
+.kpi-card:nth-child(1) .kpi-value { color: var(--accent-cyan); }
+.kpi-card:nth-child(2) .kpi-value { color: var(--accent-purple); }
+.kpi-card:nth-child(3) .kpi-value { color: var(--accent-pink); }
+.kpi-card:nth-child(4) .kpi-value { color: var(--accent-green); }
+.kpi-card:nth-child(5) .kpi-value { color: var(--accent-orange); }
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.kpi-unit {
+  font-size: 14px;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+/* === Section 通用 === */
+.section {
+  margin: 36px 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.section-title .icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.section-title .line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-cyan), transparent);
+  opacity: 0.3;
+}
+
+/* === 产业链图 === */
+.chain-container {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 0;
+}
+
+.chain-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  border-radius: 10px 0 0 10px;
+  padding: 20px 8px;
+}
+
+.chain-content {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0 10px 10px 0;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.chain-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: all 0.25s;
+}
+
+.chain-item:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--accent-cyan);
+  transform: scale(1.02);
+}
+
+.chain-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  margin-bottom: 6px;
+}
+
+.chain-item-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.chain-item-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chain-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,229,255,0.1);
+  color: var(--accent-cyan);
+}
+
+/* === 区域布局 === */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.region-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.region-card:hover {
+  border-color: var(--border-glow);
+  box-shadow: var(--glow-cyan);
+}
+
+.region-card .city-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.region-card .city-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.region-card .city-role {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.region-card .city-data {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.region-card .data-item {
+  text-align: center;
+  flex: 1;
+}
+
+.region-card .data-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.region-card .data-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.region-card .enterprise-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.region-card .ent-chip {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+}
+
+/* 城市配色 */
+.city-cs { --c: #00e5ff; }
+.city-zz { --c: #b347ff; }
+.city-xt { --c: #ff9c40; }
+.city-yy { --c: #00ffa3; }
+.city-cz { --c: #ff3d9a; }
+.city-sy { --c: #ffd93d; }
+.city-hy { --c: #3d7eff; }
+.city-cd { --c: #a0e840; }
+
+.region-card .city-badge { background: rgba(var(--c-rgb, 0,229,255), 0.15); color: var(--c); }
+.city-cs .city-badge { background: rgba(0,229,255,0.12); color: #00e5ff; }
+.city-zz .city-badge { background: rgba(179,71,255,0.12); color: #b347ff; }
+.city-xt .city-badge { background: rgba(255,156,64,0.12); color: #ff9c40; }
+.city-yy .city-badge { background: rgba(0,255,163,0.12); color: #00ffa3; }
+.city-cz .city-badge { background: rgba(255,61,154,0.12); color: #ff3d9a; }
+.city-sy .city-badge { background: rgba(255,217,61,0.12); color: #ffd93d; }
+.city-hy .city-badge { background: rgba(61,126,255,0.12); color: #3d7eff; }
+
+.city-cs .city-name { color: #00e5ff; }
+.city-zz .city-name { color: #b347ff; }
+.city-xt .city-name { color: #ff9c40; }
+.city-yy .city-name { color: #00ffa3; }
+.city-cz .city-name { color: #ff3d9a; }
+.city-sy .city-name { color: #ffd93d; }
+.city-hy .city-name { color: #3d7eff; }
+
+/* === 重点企业 === */
+.enterprise-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.ent-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.3s;
+}
+
+.ent-card:hover {
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+}
+
+.ent-name {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.ent-loc {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ent-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.ent-badge {
+  display: inline-block;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 6px;
+  background: rgba(0,255,163,0.1);
+  color: var(--accent-green);
+}
+
+/* === 创新平台 === */
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.platform-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: all 0.3s;
+}
+
+.platform-card:hover {
+  border-color: var(--accent-purple);
+  box-shadow: var(--glow-purple);
+}
+
+.platform-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(179,71,255,0.2), rgba(0,229,255,0.2));
+}
+
+.platform-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.platform-info p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* === 政策 === */
+.policy-flow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.policy-card {
+  min-width: 260px;
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 16px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.policy-card:hover {
+  border-color: var(--accent-green);
+}
+
+.policy-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 8px;
+  background: rgba(0,255,163,0.1);
+  color: var(--accent-green);
+}
+
+.policy-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.policy-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* === 趋势 === */
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.trend-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.trend-card:hover {
+  border-color: var(--accent-orange);
+  transform: translateY(-2px);
+}
+
+.trend-num {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 48px;
+  font-weight: 900;
+  opacity: 0.05;
+  line-height: 1;
+}
+
+.trend-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-orange);
+  margin-bottom: 8px;
+}
+
+.trend-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* === Footer === */
+.footer {
+  text-align: center;
+  padding: 30px 0 10px;
+  margin-top: 40px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.footer p {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.footer .footer-highlight {
+  color: var(--accent-cyan);
+}
+
+/* === 响应式 === */
+@media (max-width: 1024px) {
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .region-grid { grid-template-columns: repeat(2, 1fr); }
+  .enterprise-grid { grid-template-columns: repeat(3, 1fr); }
+  .platform-grid { grid-template-columns: repeat(2, 1fr); }
+  .trend-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .header h1 { font-size: 28px; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .region-grid { grid-template-columns: 1fr; }
+  .enterprise-grid { grid-template-columns: repeat(2, 1fr); }
+  .platform-grid { grid-template-columns: 1fr; }
+  .trend-grid { grid-template-columns: 1fr; }
+  .chain-container { grid-template-columns: 60px 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="particle-bg"></div>
+
+<div class="container">
+
+  <!-- ========== HEADER ========== -->
+  <div class="header">
+    <div class="header-subtitle">HUNAN OPTOELECTRONIC FUSION INDUSTRY PANORAMA</div>
+    <h1>湖南省光电融合产业全景图</h1>
+    <div class="header-meta">
+      <span>4×4 现代化产业体系</span>|<span>十五五规划关键之年</span>|<span>2026年度产业图谱</span>
+    </div>
+  </div>
+
+  <!-- ========== KPI ========== -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-value">1571.74<span class="kpi-unit">亿元</span></div>
+      <div class="kpi-label">2026年重点项目总投资</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">50<span class="kpi-unit">个</span></div>
+      <div class="kpi-label">电子信息制造业重点项目</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">478.91<span class="kpi-unit">亿元</span></div>
+      <div class="kpi-label">达产后预计新增营收</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">229.1<span class="kpi-unit">亿元</span></div>
+      <div class="kpi-label">2025年实际完成投资</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">7<span class="kpi-unit">大</span></div>
+      <div class="kpi-label">核心产业集聚城市</div>
+    </div>
+  </div>
+
+  <!-- ========== 产业链 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(0,229,255,0.15);color:#00e5ff">⛓</div>
+      <span>光电融合产业链全景</span>
+      <div class="line"></div>
+    </div>
+
+    <!-- 上游 -->
+    <div class="chain-container" style="margin-bottom:4px">
+      <div class="chain-label" style="background:rgba(0,229,255,0.1);color:#00e5ff">上 游<br><span style="font-size:10px;letter-spacing:0">材料·芯片</span></div>
+      <div class="chain-content">
+        <div class="chain-item">
+          <div class="chain-item-title">光电材料</div>
+          <div class="chain-item-desc">基板玻璃、光电特种气体、靶材、光纤预制棒、光电晶体材料</div>
+          <div class="chain-item-tags"><span class="chain-tag">邵虹基板玻璃</span><span class="chain-tag">中化蓝天</span><span class="chain-tag">江丰电子靶材</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光芯片</div>
+          <div class="chain-item-desc">DFB/EML激光芯片、PIN/APD探测器、硅光芯片、光通信核心芯片</div>
+          <div class="chain-item-tags"><span class="chain-tag">硅基Micro-LED</span><span class="chain-tag">高速EML</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">功率半导体</div>
+          <div class="chain-item-desc">IGBT芯片、MOSFET、SBD、中低压功率器件、第三代半导体</div>
+          <div class="chain-item-tags"><span class="chain-tag">中车时代半导体</span><span class="chain-tag">三一硅能</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光纤光缆</div>
+          <div class="chain-item-desc">单模/多模光纤、特种光纤、光缆、光纤连接器、MPO连接器</div>
+          <div class="chain-item-tags"><span class="chain-tag">信维电子</span><span class="chain-tag">艾迪奥电子</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光学元器件</div>
+          <div class="chain-item-desc">光学镜头、偏光片、光学透镜、滤光片、光学玻璃盖板</div>
+          <div class="chain-item-tags"><span class="chain-tag">山嘉光电</span><span class="chain-tag">谱特光电</span><span class="chain-tag">深辉电子</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中游 -->
+    <div class="chain-container" style="margin-bottom:4px">
+      <div class="chain-label" style="background:rgba(179,71,255,0.1);color:#b347ff">中 游<br><span style="font-size:10px;letter-spacing:0">器件·模组</span></div>
+      <div class="chain-content">
+        <div class="chain-item">
+          <div class="chain-item-title">新型显示面板</div>
+          <div class="chain-item-desc">LCD/OLED面板、Mini-LED背光/直显模组、液晶显示触控模组、显示终端整机</div>
+          <div class="chain-item-tags"><span class="chain-tag">惠科</span><span class="chain-tag">中沛光电</span><span class="chain-tag">蓝思科技</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光通信器件</div>
+          <div class="chain-item-desc">光模块、光收发组件、光耦合器、激光器、光电探测器、光放大器</div>
+          <div class="chain-item-tags"><span class="chain-tag">光智通信</span><span class="chain-tag">图灵智算</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光电传感与精密制造</div>
+          <div class="chain-item-desc">激光蚀刻设备、光电传感器、光学精密加工、COG芯片绑定、玻璃镀膜</div>
+          <div class="chain-item-tags"><span class="chain-tag">阿秒光学</span><span class="chain-tag">弘宇精密</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">半导体封测与智造</div>
+          <div class="chain-item-desc">功率器件封装测试、集成电路制造、半导体材料加工、智能装备制造</div>
+          <div class="chain-item-tags"><span class="chain-tag">半导体湘潭智造基地</span><span class="chain-tag">明正宏电子</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">光电功能材料</div>
+          <div class="chain-item-desc">光电复合材料、碳基材料、光电薄膜、3D玻璃、柔性显示材料</div>
+          <div class="chain-item-tags"><span class="chain-tag">金博股份</span><span class="chain-tag">麓邦光电</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下游 -->
+    <div class="chain-container">
+      <div class="chain-label" style="background:rgba(255,61,154,0.1);color:#ff3d9a">下 游<br><span style="font-size:10px;letter-spacing:0">应用·终端</span></div>
+      <div class="chain-content">
+        <div class="chain-item">
+          <div class="chain-item-title">智能终端</div>
+          <div class="chain-item-desc">智能手机、智能穿戴、具身智能机器人、人机交互显示终端</div>
+          <div class="chain-item-tags"><span class="chain-tag">蓝思科技机器人</span><span class="chain-tag">中沛手机整机</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">数据中心与算力</div>
+          <div class="chain-item-desc">AI智算中心、超算中心、高速光互联、硅光CPO应用</div>
+          <div class="chain-item-tags"><span class="chain-tag">图灵智算</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">5G通信与网络</div>
+          <div class="chain-item-desc">5G基站光模块、光传输网络、光纤宽带接入、运营商集采</div>
+          <div class="chain-item-tags"><span class="chain-tag">光智通信</span><span class="chain-tag">信维电科</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">安防与车载光电</div>
+          <div class="chain-item-desc">安防监控光电系统、车载激光雷达、车载显示、智能交通</div>
+          <div class="chain-item-tags"><span class="chain-tag">英飞拓</span></div>
+        </div>
+        <div class="chain-item">
+          <div class="chain-item-title">新型显示终端</div>
+          <div class="chain-item-desc">大尺寸显示整机、LED直显、Mini-LED背光电视、商用显示</div>
+          <div class="chain-item-tags"><span class="chain-tag">惠科直显整机</span><span class="chain-tag">明和数艺</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 区域布局 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(0,255,163,0.15);color:#00ffa3">📍</div>
+      <span>七大核心产业集聚区</span>
+      <div class="line"></div>
+    </div>
+    <div class="region-grid">
+
+      <div class="region-card city-cs">
+        <div class="city-badge">省会·核心引擎</div>
+        <div class="city-name">长沙</div>
+        <div class="city-role">新型显示龙头 · 智能终端 · 先进计算</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#00e5ff">百亿+</div><div class="data-label">重大项目6个</div></div>
+          <div class="data-item"><div class="data-value" style="color:#00e5ff">前列</div><div class="data-label">投资完成率</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">惠科</span>
+          <span class="ent-chip">蓝思科技</span>
+          <span class="ent-chip">图灵智算</span>
+          <span class="ent-chip">麓邦光电</span>
+          <span class="ent-chip">明和数艺</span>
+          <span class="ent-chip">韶光芯材</span>
+        </div>
+      </div>
+
+      <div class="region-card city-zz">
+        <div class="city-badge">功率半导体国家队</div>
+        <div class="city-name">株洲</div>
+        <div class="city-role">功率半导体全产业链 · 国家级产业集群</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#b347ff">220+</div><div class="data-label">上下游企业</div></div>
+          <div class="data-item"><div class="data-value" style="color:#b347ff">国家级</div><div class="data-label">中小企业特色集群</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">中车时代半导体</span>
+          <span class="ent-chip">三一硅能</span>
+          <span class="ent-chip">赛德雷特</span>
+        </div>
+      </div>
+
+      <div class="region-card city-xt">
+        <div class="city-badge">半导体智造基地</div>
+        <div class="city-name">湘潭</div>
+        <div class="city-role">半导体制造 · 智能终端设备</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#ff9c40">23.8亿</div><div class="data-label">年度完成投资</div></div>
+          <div class="data-item"><div class="data-value" style="color:#ff9c40">双周</div><div class="data-label">进度调度机制</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">半导体湘潭智造基地</span>
+          <span class="ent-chip">蓝思智能终端</span>
+          <span class="ent-chip">锦智光电</span>
+          <span class="ent-chip">金杯电工</span>
+        </div>
+      </div>
+
+      <div class="region-card city-yy">
+        <div class="city-badge">湖南光电谷</div>
+        <div class="city-name">益阳</div>
+        <div class="city-role">光通信器件 · 光学镜头 · 光电材料 · 长益科创走廊节点</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#00ffa3">86项</div><div class="data-label">专利申报</div></div>
+          <div class="data-item"><div class="data-value" style="color:#00ffa3">12项</div><div class="data-label">成果转化</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">湖南未来光电技术研究院</span>
+          <span class="ent-chip">金博股份</span>
+          <span class="ent-chip">信维电科</span>
+          <span class="ent-chip">光智通信</span>
+          <span class="ent-chip">江丰电子</span>
+          <span class="ent-chip">明正宏电子</span>
+          <span class="ent-chip">艾迪奥电子</span>
+        </div>
+      </div>
+
+      <div class="region-card city-cz">
+        <div class="city-badge">湘南光电谷</div>
+        <div class="city-name">郴州</div>
+        <div class="city-role">光电显示完整产业链 · 粤港澳大湾区产业转移承接地</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#ff3d9a">80亿</div><div class="data-label">光电集群产值</div></div>
+          <div class="data-item"><div class="data-value" style="color:#ff3d9a">59家</div><div class="data-label">关联企业</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">宜章经开区(59家)</span>
+          <span class="ent-chip">北湖湘南光电产业园</span>
+          <span class="ent-chip">山嘉光电</span>
+          <span class="ent-chip">谱特光电</span>
+          <span class="ent-chip">中沛光电</span>
+          <span class="ent-chip">英飞拓</span>
+          <span class="ent-chip">阿秒光学</span>
+          <span class="ent-chip">仁创电子</span>
+          <span class="ent-chip">恒维电子</span>
+        </div>
+      </div>
+
+      <div class="region-card city-sy">
+        <div class="city-badge">基板玻璃基地</div>
+        <div class="city-name">邵阳</div>
+        <div class="city-role">显示基板玻璃 · 上下游配套集聚</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#ffd93d">4条</div><div class="data-label">热端生产线</div></div>
+          <div class="data-item"><div class="data-value" style="color:#ffd93d">20+</div><div class="data-label">对接意向项目</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">邵虹基板玻璃</span>
+          <span class="ent-chip">致成科技</span>
+        </div>
+      </div>
+
+      <div class="region-card city-hy">
+        <div class="city-badge">衡器计量产业</div>
+        <div class="city-name">衡阳</div>
+        <div class="city-role">智能衡器计量 · 电子信息配套</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#3d7eff">20家</div><div class="data-label">入驻企业</div></div>
+          <div class="data-item"><div class="data-value" style="color:#3d7eff">首开区</div><div class="data-label">建成启用</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">智能衡器计量产业园</span>
+        </div>
+      </div>
+
+      <div class="region-card city-cd" style="grid-column: span 2;">
+        <div class="city-badge">承接产业转移示范</div>
+        <div class="city-name">永州 · 常德 · 其他</div>
+        <div class="city-role">湘南湘西承接产业转移示范区 · 人机交互智能显示</div>
+        <div class="city-data">
+          <div class="data-item"><div class="data-value" style="color:#a0e840">30+</div><div class="data-label">永州引进项目</div></div>
+          <div class="data-item"><div class="data-value" style="color:#a0e840">29个</div><div class="data-label">常德显示项目签约</div></div>
+        </div>
+        <div class="enterprise-list">
+          <span class="ent-chip">桃源高新区</span>
+          <span class="ent-chip">人机交互智能显示</span>
+          <span class="ent-chip">风电航空航天零组件</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== 重点企业 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(255,156,64,0.15);color:#ff9c40">🏢</div>
+      <span>龙头与重点企业</span>
+      <div class="line"></div>
+    </div>
+    <div class="enterprise-grid">
+      <div class="ent-card">
+        <div class="ent-name">蓝思科技</div>
+        <div class="ent-loc">长沙 · 浏阳</div>
+        <div class="ent-desc">智能装备研发生产基地，新增年产1万台大型自动化设备和50万台具身智能机器人，3D玻璃研发生产</div>
+        <div class="ent-badge">十大产业项目</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">惠科</div>
+        <div class="ent-loc">长沙 · 浏阳</div>
+        <div class="ent-desc">Mini-LED背光/直显模组及整机项目，主厂房封顶，直显模组及整机百亿级项目</div>
+        <div class="ent-badge">十大产业项目</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">中车时代半导体</div>
+        <div class="ent-loc">株洲</div>
+        <div class="ent-desc">中低压功率器件产业化项目通线，国家级功率半导体产业集群链主企业</div>
+        <div class="ent-badge">十大产业项目</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">邵虹</div>
+        <div class="ent-loc">邵阳</div>
+        <div class="ent-desc">基板玻璃项目，3条热端+2条冷端生产线建成，第4条热端设计阶段</div>
+        <div class="ent-badge">十大产业项目</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">金博股份</div>
+        <div class="ent-loc">益阳</div>
+        <div class="ent-desc">光电材料龙头，组建创新联合体，碳基材料领域技术领先</div>
+        <div class="ent-badge">创新联合体</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">信维电科</div>
+        <div class="ent-loc">益阳</div>
+        <div class="ent-desc">电子元器件、5G配套，高端电子元器件产业核心企业</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">光智通信</div>
+        <div class="ent-loc">益阳</div>
+        <div class="ent-desc">光通信器件研发制造，长益常科创走廊光电产业关键企业</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">江丰电子</div>
+        <div class="ent-loc">益阳</div>
+        <div class="ent-desc">全球靶材龙头，益阳基地为其全球最大外埠基地，年产值预计超7.5亿元</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">山嘉光电</div>
+        <div class="ent-loc">郴州 · 宜章</div>
+        <div class="ent-desc">大尺寸偏光片供应商，服务惠科/华星/京东方，产值3年从900万增至6亿</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">谱特光电</div>
+        <div class="ent-loc">郴州 · 宜章</div>
+        <div class="ent-desc">打破偏光片日韩垄断，超薄圆偏光片入选省首套件，2项发明专利</div>
+        <div class="ent-badge">首套件</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">中沛光电</div>
+        <div class="ent-loc">郴州 · 北湖</div>
+        <div class="ent-desc">链主型企业，5秒/台手机整机，COG技术填补郴州空白</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">英飞拓</div>
+        <div class="ent-loc">郴州 · 北湖</div>
+        <div class="ent-desc">全国安防5强，年产值预计突破3亿元</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">图灵智算</div>
+        <div class="ent-loc">长沙</div>
+        <div class="ent-desc">宽谱域高端光电产品研发制造基地，量子科技+光电融合</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">麓邦光电</div>
+        <div class="ent-loc">长沙</div>
+        <div class="ent-desc">显示屏项目，光电功能材料与新型显示</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">明正宏电子</div>
+        <div class="ent-loc">益阳</div>
+        <div class="ent-desc">双层/多层线路板扩建，年产能增至150万平方米</div>
+      </div>
+      <div class="ent-card">
+        <div class="ent-name">阿秒光学</div>
+        <div class="ent-loc">郴州 · 北湖</div>
+        <div class="ent-desc">激光蚀刻设备，与中沛光电形成技术闭环，良品率98.6%</div>
+        <div class="ent-badge">上市后备</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 创新平台 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(179,71,255,0.15);color:#b347ff">🔬</div>
+      <span>创新平台与科研支撑</span>
+      <div class="line"></div>
+    </div>
+    <div class="platform-grid">
+      <div class="platform-card">
+        <div class="platform-icon">⚛</div>
+        <div class="platform-info">
+          <h4>湖南未来光电技术研究院</h4>
+          <p>益阳高新区 × 湖南师范大学共建，突破硅基Micro-LED核心技术，申报专利86项，成果转化12项</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🧪</div>
+        <div class="platform-info">
+          <h4>5G+电容器科技孵化器</h4>
+          <p>益阳高新区，科技型企业孵化器，聚焦光电产业创新孵化</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">📋</div>
+        <div class="platform-info">
+          <h4>湖南省新型电子元器件中试基地</h4>
+          <p>益阳高新区，科技成果转化中试基地，支撑光电元器件产业化</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🎓</div>
+        <div class="platform-info">
+          <h4>高校科研力量</h4>
+          <p>国防科技大学、湖南大学、中南大学、湖南师范大学、长沙理工大学、湘南学院</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🔧</div>
+        <div class="platform-info">
+          <h4>金博股份创新联合体</h4>
+          <p>光电材料领域创新联合体，产学研协同攻关</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🌐</div>
+        <div class="platform-info">
+          <h4>国家新型显示产业技术创新联盟</h4>
+          <p>宜章经开区光电产业协会加入，拓宽产业发展空间</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">📡</div>
+        <div class="platform-info">
+          <h4>新型显示研发中心</h4>
+          <p>宜章经开区投资390万元筹建，产学研深度合作，4名国家级专家顾问</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🚀</div>
+        <div class="platform-info">
+          <h4>郴江实验室</h4>
+          <p>郴州地区科研平台，帮助企业解决技术痛点、研发难点</p>
+        </div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-icon">🤝</div>
+        <div class="platform-info">
+          <h4>飞地园区·科创飞地</h4>
+          <p>益阳高新区-湘江新区飞地园区，益阳（长沙）光电技术创新中心</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 政策 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(0,255,163,0.15);color:#00ffa3">📜</div>
+      <span>政策支撑体系</span>
+      <div class="line"></div>
+    </div>
+    <div class="policy-flow">
+      <div class="policy-card">
+        <div class="policy-tag">顶层规划</div>
+        <div class="policy-title">湖南省"十五五"未来产业发展规划</div>
+        <div class="policy-desc">谋划光电产业发展布局，将光电信息列入重点方向，支持益阳、娄底建设长株潭都市圈融合发展区</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">产业体系</div>
+        <div class="policy-title">"4×4"现代化产业体系</div>
+        <div class="policy-desc">将功率半导体产业纳入重点培育，聚焦先进计算、音视频、新一代半导体、人工智能、新型显示等重点领域</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">区域协同</div>
+        <div class="policy-title">"长益"未来光电技术科创与产业走廊</div>
+        <div class="policy-desc">构建长沙-益阳科创走廊，打造全省高质量发展新引擎，建立规划衔接、政策协同、产业联动机制</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">专项支持</div>
+        <div class="policy-title">支持益阳高端电子元器件产业</div>
+        <div class="policy-desc">重点发展激光器、光电二极管、光传感器、硅光芯片等光电子器件，打造"湖南光电谷"</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">成果转化</div>
+        <div class="policy-title">"先用后付"推广实施方案</div>
+        <div class="policy-desc">省科技厅等4部门制定，首批推广537项科技成果，支持光电产业基础性、共性技术成果加速转化</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">飞地机制</div>
+        <div class="policy-title">飞地园区发展若干措施</div>
+        <div class="policy-desc">省发改委印发，支持GDP核算、税收分成、能耗指标分配，推动益阳在长沙建设光电技术创新中心</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">知识产权</div>
+        <div class="policy-title">知识产权服务集聚试点</div>
+        <div class="policy-desc">益阳高新区纳入试点，开通侵权纠纷行政裁决与司法审判优先通道，一站式综合服务</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-tag">区域规划</div>
+        <div class="policy-title">益阳"十五五"新型工业化规划</div>
+        <div class="policy-desc">确定光电产业为战略性主导产业，明确益阳高新区"湖南光电谷"核心定位</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 发展趋势 ========== -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon" style="background:rgba(255,156,64,0.15);color:#ff9c40">📈</div>
+      <span>发展趋势与未来方向</span>
+      <div class="line"></div>
+    </div>
+    <div class="trend-grid">
+      <div class="trend-card">
+        <div class="trend-num">01</div>
+        <div class="trend-title">AI+光电融合</div>
+        <div class="trend-text">AI算力大规模运算需求驱动光电技术战略地位提升，光互联替代电互联成为算力网络核心支撑，硅光CPO技术加速落地</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-num">02</div>
+        <div class="trend-title">国产替代加速</div>
+        <div class="trend-text">高端光芯片、EML、高速DSP国产化率不足10%，湖南在功率半导体、靶材、偏光片等领域实现突破，"从0到1"持续涌现</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-num">03</div>
+        <div class="trend-title">长益科创走廊</div>
+        <div class="trend-text">长沙研发+益阳转化模式深化，飞地园区机制打通区域壁垒，长益常科创走廊光电产业带加速成型</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-num">04</div>
+        <div class="trend-title">湾区产业承接</div>
+        <div class="trend-text">湖南"一带一部"区位优势凸显，50个重点项目中24%承接长三角、粤港澳大湾区产业转移，郴州成为光电显示产业转移核心承接地</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Footer ========== -->
+  <div class="footer">
+    <p>数据来源：湖南省工业和信息化厅、湖南省人民政府门户网站、湖南日报·新湖南客户端</p>
+    <p><span class="footer-highlight">湖南省光电融合产业全景图</span> | 2026年度 | 基于"十五五"规划及2025-2026年重点项目公开信息整理</p>
+  </div>
+
+</div>
+
+</body>
+</html>
