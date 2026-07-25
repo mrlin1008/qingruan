@@ -39,3 +39,4 @@ node_modules/
 *.db
 .tyc_session.json
 .img_cache/
+daily_update.log
