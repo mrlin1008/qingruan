@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}商机管线 — 长亭湖南作战指挥{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-kanban"></i> 商机管线</h4>
+        <small class="text-muted">来自招投标模块，仅展示准备招标中且未产生中标方的项目</small>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary fs-6">{{ "%.0f"|format(total_amount) }}万</span>
+        <span class="badge bg-warning fs-6">{{ total_count }}个项目</span>
+    </div>
+</div>
+
+<!-- 品类筛选 -->
+<div class="d-flex flex-wrap gap-1 mb-3">
+    <a href="/opportunities" class="btn btn-sm {% if not category_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">全部</a>
+    {% for cat in categories %}
+    <a href="/opportunities?category={{ cat }}" class="btn btn-sm {% if category_filter==cat %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<!-- 按产品品类分列看板 -->
+<div class="pipeline-board d-flex gap-2 overflow-auto pb-3">
+    {% for cat, col in pipeline.items() %}
+    <div class="pipeline-column" style="min-width:220px;flex:1">
+        <div class="pipeline-header bg-{{ col.color }} text-white rounded-top p-2 text-center">
+            <strong>{{ col.label }}</strong>
+            <span class="badge bg-light text-dark ms-1">{{ col.count }}</span>
+        </div>
+        <div class="pipeline-body border rounded-bottom p-2" style="min-height:120px;background:#f8f9fa">
+            {% for b in col.bids %}
+            <div class="opp-card border rounded p-2 mb-2 bg-white">
+                <div class="fw-medium small mb-1">{{ b.project_name or '-' }}</div>
+                {% if b.bidder_name %}<div class="small text-muted"><i class="bi bi-building"></i> {{ b.bidder_name }}</div>{% endif %}
+                <div class="d-flex justify-content-between mt-1">
+                    {% if b.bid_amount and b.bid_amount > 0 %}
+                    <small class="text-danger fw-bold">{{ "%.0f"|format(b.bid_amount) }}万</small>
+                    {% else %}
+                    <small class="text-muted">金额待定</small>
+                    {% endif %}
+                    {% if b.bid_deadline %}
+                    <small class="text-warning"><i class="bi bi-clock"></i> {{ b.bid_deadline }}</small>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">{{ b.publish_date or '' }}</small>
+                    {% if b.source_url %}
+                    <a href="{{ b.source_url | safe }}" target="_blank" class="small"><i class="bi bi-box-arrow-up-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-3 text-muted small">暂无</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-inbox display-3 d-block mb-2"></i>暂无准备招标的项目
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

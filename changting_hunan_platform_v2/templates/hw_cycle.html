@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}HW行动 — 长亭湖南作战指挥{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-lightning-charge"></i> HW行动管理</h4>
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-shield-shaded"></i></div><div class="stat-value">{{ status_counts['备战'] }}</div><div class="stat-label">备战中</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-lightning-charge"></i></div><div class="stat-value">{{ status_counts['进行中'] }}</div><div class="stat-label">进行中</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-info-subtle text-info"><i class="bi bi-journal-check"></i></div><div class="stat-value">{{ status_counts['复盘'] }}</div><div class="stat-label">复盘中</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div><div class="stat-value">{{ "%.0f"|format(total_contract) }}<small class="fs-6">万</small></div><div class="stat-label">合同总额</div></div></div>
+</div>
+<div class="filter-bar mb-3"><div class="d-flex gap-2">{% for y in hw_years %}<a href="?year={{ y }}" class="btn btn-sm {% if year==y %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ y }}年</a>{% endfor %}</div></div>
+<div class="table-responsive"><table class="table table-hover table-sm"><thead class="table-light"><tr><th>参演单位</th><th>角色</th><th>状态</th><th>我方参与</th><th class="text-end">合同额(万)</th><th>备战开始</th><th>HW日期</th><th>经验教训</th></tr></thead>
+<tbody>{% for h in hw_records %}<tr>
+    <td><strong>{{ h.unit_name }}</strong>{% if h.customer_name %}<br><span class="badge bg-info-subtle text-info small">{{ h.customer_name }}</span>{% endif %}</td>
+    <td>{{ h.role or '-' }}</td>
+    <td><span class="badge bg-{{ 'warning' if h.status=='进行中' else 'info' if h.status=='复盘' else 'success' if h.status=='完成' else 'secondary' }}">{{ h.status }}</span></td>
+    <td><small>{{ h.our_involvement or '-' }}</small></td>
+    <td class="text-end fw-bold text-danger">{% if h.contract_amount %}{{ "%.0f"|format(h.contract_amount) }}{% else %}-{% endif %}</td>
+    <td><small>{{ h.prep_start_date or '-' }}</small></td>
+    <td><small>{{ h.hw_start_date or '-' }} ~ {{ h.hw_end_date or '-' }}</small></td>
+    <td><small>{{ h.key_lessons or '-' }}</small></td>
+</tr>{% else %}<tr><td colspan="8" class="text-center py-4 text-muted">暂无HW数据</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

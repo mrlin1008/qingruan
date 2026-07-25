@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} — 客户360{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/customers" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+    <h4 class="mb-0">{{ customer.name }}</h4>
+    {% if customer.industry %}<span class="badge-industry">{{ customer.industry }}</span>{% endif %}
+    <span class="badge bg-info-subtle text-info">画像覆盖率 {{ ((covered|length) / (all_categories|length) * 100)|round }}%</span>
+</div>
+
+<!-- 5 Tab -->
+<ul class="nav nav-tabs mb-3" id="custTabs">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab1"><i class="bi bi-shield-check"></i> 安全画像</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab2"><i class="bi bi-person-badge"></i> 关键人 ({{ key_persons|length }})</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab3"><i class="bi bi-kanban"></i> 商机 ({{ opportunities|length }})</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab4"><i class="bi bi-broadcast"></i> 相关信号 ({{ signals|length }})</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab5"><i class="bi bi-file-earmark-text"></i> 招投标 ({{ bidding|length }})</a></li>
+</ul>
+
+<div class="tab-content">
+    <!-- Tab1：安全画像 -->
+    <div class="tab-pane fade show active" id="tab1">
+        <div class="row g-3">
+            <div class="col-md-6"><div class="chart-card"><h6 class="chart-title">基本信息</h6>
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="text-muted" width="80">城市</td><td>{{ customer.city or '-' }} {{ customer.district or '' }}</td></tr>
+                    <tr><td class="text-muted">规模</td><td>{{ customer.scale or '-' }}</td></tr>
+                    <tr><td class="text-muted">IT预算</td><td>{{ customer.it_budget_level or '-' }}</td></tr>
+                    <tr><td class="text-muted">官网</td><td>{% if customer.website %}<a href="{{ customer.website }}" target="_blank">{{ customer.website }}</a>{% else %}-{% endif %}</td></tr>
+                    <tr><td class="text-muted">简介</td><td>{{ customer.description or '-' }}</td></tr>
+                </table>
+            </div></div>
+            <div class="col-md-6"><div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-2"><h6 class="chart-title mb-0">安全建设画像</h6><button class="btn btn-primary btn-sm" onclick="showAddProfile()"><i class="bi bi-plus-lg"></i></button></div>
+                <div class="table-responsive"><table class="table table-sm table-hover">
+                    <thead><tr><th>品类</th><th>现有方案</th><th>满意度</th><th>到期</th><th></th></tr></thead>
+                    <tbody>
+                    {% for sp in profiles %}
+                    <tr><td><span class="badge-category">{{ sp.product_category }}</span></td><td>{{ sp.current_solution or '-' }}</td>
+                        <td>{% if sp.satisfaction=='高' %}<span class="text-success">😊</span>{% elif sp.satisfaction=='中' %}<span class="text-warning">😐</span>{% elif sp.satisfaction=='低' %}<span class="text-danger">😞</span>{% else %}-{% endif %}</td>
+                        <td><small>{{ sp.renewal_date or '-' }}</small></td>
+                        <td><button class="btn btn-sm btn-outline-danger py-0" onclick="delProfile({{ sp.id }})"><i class="bi bi-trash"></i></button></td>
+                    </tr>{% endfor %}</tbody>
+                </table></div>
+                {% if gaps %}<div class="mt-2"><small class="text-muted">🎯 攻坚方向：</small><div class="d-flex flex-wrap gap-1 mt-1">{% for g in gaps %}<span class="badge bg-danger-subtle text-danger">{{ g }}</span>{% endfor %}</div></div>{% endif %}
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Tab2：关键人 -->
+    <div class="tab-pane fade" id="tab2">
+        <div class="d-flex justify-content-between mb-2"><h6 class="mb-0">关键人图谱</h6><button class="btn btn-primary btn-sm" onclick="showAddPerson()"><i class="bi bi-plus-lg"></i></button></div>
+        <div class="row g-2">{% for kp in key_persons %}
+            <div class="col-md-4"><div class="border rounded p-2"><div class="d-flex justify-content-between"><strong>{{ kp.name }}</strong><span class="badge bg-{{ 'success' if kp.relationship_level=='信任' else 'primary' if kp.relationship_level=='熟悉' else 'secondary' }}">{{ kp.relationship_level or '认识' }}</span></div>
+                <small class="text-muted">{{ kp.title or '' }} · {{ kp.department or '' }}</small>
+                <div class="small mt-1">{% if kp.role %}<span class="badge bg-light text-dark me-1">{{ kp.role }}</span>{% endif %}{% if kp.phone %}<i class="bi bi-telephone"></i> {{ kp.phone }}<br>{% endif %}{% if kp.wechat %}<i class="bi bi-wechat"></i> {{ kp.wechat }}{% endif %}</div>
+                {% if kp.personality_notes %}<small class="text-muted d-block mt-1">💬 {{ kp.personality_notes }}</small>{% endif %}
+            </div></div>
+        {% endfor %}</div>
+    </div>
+
+    <!-- Tab3：商机 -->
+    <div class="tab-pane fade" id="tab3">
+        {% for opp in opportunities %}
+        <div class="border rounded p-2 mb-2"><div class="d-flex justify-content-between"><strong>{{ opp.title }}</strong><span class="badge bg-{{ 'success' if opp.stage=='won' else 'danger' if opp.stage=='lost' else 'primary' }}">{{ opp.stage }}</span></div>
+            <small class="text-muted">{{ opp.product_category }} · {% if opp.amount %}{{ "%.0f"|format(opp.amount) }}万 · {% endif %}概率 {{ opp.probability }}% · {{ opp.expected_close_date or '' }}</small>
+            {% if opp.signal_id %}<small class="text-info ms-2">← 来自信号</small>{% endif %}
+        </div>{% else %}<p class="text-muted">暂无商机</p>{% endfor %}
+    </div>
+
+    <!-- Tab4：相关信号 -->
+    <div class="tab-pane fade" id="tab4">
+        {% for s in signals %}<div class="border rounded p-2 mb-2"><span class="badge-source me-1">{{ s.signal_source }}</span><strong>{{ s.title }}</strong><small class="text-muted ms-2">{{ s.detected_at }}</small>{% if s.action_suggestion %}<div class="small text-success mt-1">💡 {{ s.action_suggestion }}</div>{% endif %}</div>{% else %}<p class="text-muted">暂无关联信号</p>{% endfor %}
+    </div>
+
+    <!-- Tab5：招投标（天眼查实时数据） -->
+    <div class="tab-pane fade" id="tab5">
+        <h6 class="mb-2"><i class="bi bi-file-earmark-text"></i> 本年度招投标记录（天眼查）</h6>
+        {% if tyc_error %}
+        <div class="alert alert-warning small">{{ tyc_error }}</div>
+        {% elif not tyc_bids %}
+        <p class="text-muted small">暂无本年度招投标记录</p>
+        {% else %}
+        <small class="text-success">共 {{ tyc_bids|length }} 条</small>
+        {% for r in tyc_bids %}
+        <div class="border-bottom pb-2 mb-2 small">
+            <strong>{{ r.project_name }}</strong>
+            <span class="text-muted ms-2">{{ r.publish_date }}</span><br>
+            <span class="text-muted">招标: {{ r.bidder_name }}</span>
+            {% if r.winner_name %}<span class="ms-2">→ 中标: {{ r.winner_name }}</span>{% endif %}
+            {% if r.bid_amount %}<span class="ms-2 text-danger">{{ "%.0f"|format(r.bid_amount) }}万</span>{% endif %}
+            {% if r.bid_url %}
+            <a href="{{ r.bid_url }}" target="_blank" class="badge bg-warning text-dark text-decoration-none ms-2">
+                <i class="bi bi-box-arrow-up-right"></i> 天眼查详情
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+{% include "_add_person_profile_modals.html" %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function showAddProfile(){new bootstrap.Modal(document.getElementById('addProfileModal')).show();}
+function showAddPerson(){new bootstrap.Modal(document.getElementById('addPersonModal')).show();}
+async function delProfile(id){if(!confirm('确认删除？'))return;await fetch('/api/security-profiles/'+id,{method:'DELETE'});location.reload();}
+document.getElementById('addProfileForm')?.addEventListener('submit',async function(e){e.preventDefault();var d={};new FormData(this).forEach(function(v,k){d[k]=v});var r=await fetch('/api/security-profiles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});if(r.ok)location.reload();});
+document.getElementById('addPersonForm')?.addEventListener('submit',async function(e){e.preventDefault();var d={};new FormData(this).forEach(function(v,k){d[k]=v});var r=await fetch('/api/key-persons',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});if(r.ok)location.reload();});
+</script>
+document.getElementById('addPersonForm')?.addEventListener('submit',async function(e){e.preventDefault();var d={};new FormData(this).forEach(function(v,k){d[k]=v});var r=await fetch('/api/key-persons',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});if(r.ok)location.reload();});
+</script>
+{% endblock %}

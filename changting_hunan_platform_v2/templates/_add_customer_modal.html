@@ -1,0 +1,23 @@
+<!-- 新增客户弹窗片段 -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <form id="addCustomerForm">
+            <div class="modal-header"><h5 class="modal-title">新增客户</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">客户名称 *</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label">英文名称</label><input type="text" name="name_en" class="form-control"></div>
+                    <div class="col-md-4"><label class="form-label">行业</label><select name="industry" class="form-select"><option value="">请选择</option><option>政府</option><option>金融</option><option>运营商</option><option>医疗</option><option>教育</option><option>能源</option><option>制造</option><option>互联网</option><option>其他</option></select></div>
+                    <div class="col-md-4"><label class="form-label">单位类型</label><select name="org_type" class="form-select"><option value="">请选择</option><option>党政机关</option><option>事业单位</option><option>国企</option><option>民企</option><option>外企</option></select></div>
+                    <div class="col-md-4"><label class="form-label">规模</label><select name="scale" class="form-select"><option value="">请选择</option><option>大型</option><option>中型</option><option>小型</option></select></div>
+                    <div class="col-md-4"><label class="form-label">城市</label><select name="city" class="form-select"><option value="">请选择</option><option>长沙</option><option>株洲</option><option>湘潭</option><option>衡阳</option><option>邵阳</option><option>岳阳</option><option>常德</option><option>张家界</option><option>益阳</option><option>郴州</option><option>永州</option><option>怀化</option><option>娄底</option><option>湘西</option></select></div>
+                    <div class="col-md-4"><label class="form-label">区县</label><input type="text" name="district" class="form-control"></div>
+                    <div class="col-md-4"><label class="form-label">IT预算</label><select name="it_budget_level" class="form-select"><option value="">请选择</option><option>充足</option><option>一般</option><option>有限</option><option>未知</option></select></div>
+                    <div class="col-md-6"><label class="form-label">官网</label><input type="url" name="website" class="form-control"></div>
+                    <div class="col-12"><label class="form-label">简介</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="submit" class="btn btn-primary">保存</button></div>
+        </form>
+    </div></div>
+</div>

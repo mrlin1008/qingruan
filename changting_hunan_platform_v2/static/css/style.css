@@ -1,0 +1,324 @@
+/* =================================================================
+   长亭科技 · 湖南作战指挥平台 — "态势感知终端" 设计系统
+   设计方向：SOC监控台风格，签名元素=暗色网格侧边栏+扫描辉光线
+   ================================================================= */
+
+/* ----- Design Tokens ----- */
+:root {
+    --sidebar-w: 240px;
+    --topbar-h: 64px;
+
+    /* Brand — 长亭蓝系 */
+    --brand-50: #eff6ff; --brand-100: #dbeafe; --brand-200: #b6d4fe;
+    --brand-300: #7eb0fb; --brand-400: #4f8cf7; --brand-500: #3069f0;
+    --brand-600: #1d4ed8; --brand-700: #1a40b0; --brand-800: #19378a; --brand-900: #162764;
+
+    /* Accent — 翡翠绿（安全行业"安全/通过"暗示） */
+    --accent-400: #34d399; --accent-500: #10b981; --accent-600: #059669;
+
+    /* Status */
+    --danger: #ef4444; --danger-subtle: #fef2f2;
+    --warning: #ea580c; --warning-subtle: #fff7ed;
+    --info: #6366f1;    --info-subtle: #eef2ff;
+
+    /* Neutrals */
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+    --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+
+    /* Surfaces — 冷灰底调，呼应监控室冷静感 */
+    --bg-root: #f0f4f8;
+    --bg-surface: #ffffff;
+    --bg-sidebar: #070c1b;
+    --bg-sidebar-hover: rgba(255,255,255,.05);
+    --bg-sidebar-active: rgba(29,78,216,.2);
+
+    /* Text */
+    --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #94a3b8;
+    --text-sidebar: #7c8aa0; --text-sidebar-active: #e2e8f0;
+
+    /* Borders */
+    --border-light: #e2e8f0; --border-card: #f1f5f9;
+
+    /* Shadows — 更细腻的多层叠加 */
+    --shadow-xs: 0 1px 2px rgba(15,23,42,.04);
+    --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+    --shadow-md: 0 4px 6px -1px rgba(15,23,42,.07), 0 2px 4px -2px rgba(15,23,42,.05);
+    --shadow-lg: 0 10px 15px -3px rgba(15,23,42,.08), 0 4px 6px -4px rgba(15,23,42,.04);
+    --shadow-xl: 0 20px 40px -8px rgba(15,23,42,.12);
+
+    /* Radii */
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+
+    /* Motion */
+    --ease-out: cubic-bezier(.22,.61,.36,1);
+    --ease-spring: cubic-bezier(.34,1.56,.64,1);
+    --dur-fast: .15s; --dur-normal: .25s; --dur-slow: .4s;
+}
+
+
+/* =================================================================
+   Reset & Base
+   ================================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg-root);color:var(--text-primary);
+    display:flex;min-height:100vh;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--brand-100);color:var(--brand-800)}
+
+
+/* =================================================================
+   Sidebar — 签名元素：网格纹理 + 青色辉光指示条
+   ================================================================= */
+.sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
+    background:var(--bg-sidebar);display:flex;flex-direction:column;
+    z-index:1000;overflow-y:auto;
+    border-right:1px solid rgba(255,255,255,.05);
+    /* 签名：极淡网格纹理，暗示雷达/扫描矩阵 */
+    background-image:
+        linear-gradient(rgba(59,130,246,.015) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(59,130,246,.015) 1px,transparent 1px);
+    background-size:24px 24px;
+    background-position:0 0;
+}
+
+.sidebar-brand{
+    padding:1.5rem 1.25rem 1.25rem;display:flex;align-items:center;gap:.75rem;
+    border-bottom:1px solid rgba(255,255,255,.05);
+}
+.brand-icon{
+    width:42px;height:42px;
+    background:linear-gradient(135deg,var(--brand-500),#1e3aa0);
+    border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.2rem;
+    box-shadow:0 0 16px rgba(48,105,240,.25);
+}
+.brand-title{display:block;font-size:.92rem;font-weight:700;color:#e2e8f0;letter-spacing:.8px}
+.brand-sub{display:block;font-size:.7rem;color:var(--text-sidebar);margin-top:2px;text-transform:uppercase;letter-spacing:1.5px}
+
+.sidebar-nav{flex:1;padding:.75rem;display:flex;flex-direction:column;gap:1px}
+.nav-item{
+    display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;
+    border-radius:var(--radius-sm);color:var(--text-sidebar);
+    font-size:.85rem;font-weight:500;position:relative;
+    transition:all var(--dur-normal) var(--ease-out);
+}
+.nav-item i{font-size:1.05rem;width:22px;text-align:center;transition:all var(--dur-normal) var(--ease-out)}
+.nav-item:hover{color:#cbd5e1;background:var(--bg-sidebar-hover)}
+.nav-item:hover i{transform:translateX(2px)}
+.nav-item.active{color:var(--text-sidebar-active);background:var(--bg-sidebar-active);font-weight:600}
+/* 签名：激活指示条用青色辉光 */
+.nav-item.active::before{
+    content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+    width:3px;height:22px;background:var(--accent-400);border-radius:2px;
+    box-shadow:0 0 10px rgba(52,211,153,.5),0 0 20px rgba(52,211,153,.2);
+}
+
+.sidebar-footer{
+    padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.05);
+    display:flex;align-items:center;gap:.5rem;color:var(--text-sidebar);font-size:.75rem;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-400);box-shadow:0 0 8px rgba(52,211,153,.6);animation:status-pulse 3s ease-in-out infinite}
+@keyframes status-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+
+/* =================================================================
+   Main Content Area
+   ================================================================= */
+.main-wrap{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+    height:var(--topbar-h);padding:0 2rem;display:flex;align-items:center;
+    position:sticky;top:0;z-index:100;
+    background:rgba(255,255,255,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border-light);
+}
+.topbar-indicator{font-size:.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:.3rem}
+.main-content{padding:1.5rem 2rem 3rem;flex:1}
+
+
+/* =================================================================
+   Stat Cards — 扫描线渐变顶条
+   ================================================================= */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem}
+.stat-card{
+    background:var(--bg-surface);border-radius:var(--radius-lg);
+    padding:1.25rem 1.5rem;border:1px solid var(--border-card);
+    position:relative;overflow:hidden;
+    box-shadow:var(--shadow-sm);
+    transition:all var(--dur-normal) var(--ease-out);
+}
+/* 签名：卡片右上角扫描辉光渐变条 */
+.stat-card::before{
+    content:'';position:absolute;top:0;right:0;width:60%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--brand-400));
+    opacity:0;transition:opacity var(--dur-slow) var(--ease-out);
+}
+.stat-card::after{
+    content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+    background:radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%),rgba(59,130,246,.03),transparent 50%);
+    opacity:0;transition:opacity var(--dur-normal);
+}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--brand-200)}
+.stat-card:hover::before{opacity:1}
+.stat-card:hover::after{opacity:1}
+
+.stat-card .stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
+.stat-card .stat-value{font-size:1.65rem;font-weight:700;line-height:1.1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.stat-card .stat-value small{font-size:.65rem;font-weight:500;vertical-align:super;margin-left:.2rem}
+.stat-card .stat-label{color:var(--text-secondary);font-size:.78rem;font-weight:500;margin-top:.2rem;letter-spacing:.01em}
+
+/* HW倒计时脉冲 */
+.stat-card.pulse{animation:pulse-ring 2.5s ease-in-out infinite}
+@keyframes pulse-ring{0%,100%{box-shadow:var(--shadow-sm)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.12),var(--shadow-sm)}}
+
+
+/* =================================================================
+   Chart Cards
+   ================================================================= */
+.chart-card{
+    background:var(--bg-surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-card);padding:1.25rem 1.5rem;
+    margin-bottom:1.25rem;box-shadow:var(--shadow-xs);
+    transition:box-shadow var(--dur-normal) var(--ease-out);
+}
+.chart-card:hover{box-shadow:var(--shadow-md)}
+.chart-card .chart-title{
+    font-size:.85rem;font-weight:600;color:var(--text-primary);
+    margin-bottom:.75rem;padding-bottom:.55rem;
+    border-bottom:1px solid var(--border-light);
+    display:flex;align-items:center;gap:.4rem;letter-spacing:.01em;
+}
+.chart-card .chart-title i{color:var(--brand-500);font-size:.92rem}
+
+
+/* =================================================================
+   Shared Card Patterns
+   ================================================================= */
+.filter-bar{
+    background:var(--bg-surface);border-radius:var(--radius-md);
+    border:1px solid var(--border-card);padding:1rem 1.25rem;
+    margin-bottom:1.25rem;box-shadow:var(--shadow-xs);
+}
+
+/* 通用卡片 — 左侧彩色边框标记威胁等级 */
+.signal-card,.intel-card,.insight-card{
+    background:var(--bg-surface);border-radius:var(--radius-md);
+    border:1px solid var(--border-card);
+    box-shadow:var(--shadow-xs);
+    transition:all var(--dur-normal) var(--ease-out);
+}
+.signal-card:hover,.intel-card:hover,.insight-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.signal-card.border-danger,.intel-card.border-danger,.insight-card.border-danger{border-left:3px solid var(--danger)!important}
+.signal-card.border-warning,.intel-card.border-warning,.insight-card.border-warning{border-left:3px solid var(--warning)!important}
+
+/* 客户卡片 */
+.customer-card{
+    background:var(--bg-surface);border-radius:var(--radius-md);
+    border:1px solid var(--border-card);
+    box-shadow:var(--shadow-xs);
+    transition:all var(--dur-normal) var(--ease-out);
+}
+.customer-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--brand-300)}
+
+/* 需关注客户项 */
+.focus-item{border-color:var(--border-light)!important;transition:all var(--dur-fast);}
+.focus-item:hover{background:var(--brand-50);border-color:var(--brand-200)!important}
+
+
+/* =================================================================
+   Pipeline Board (商机看板)
+   ================================================================= */
+.pipeline-board{overflow-x:auto;padding-bottom:.5rem}
+.pipeline-column{min-width:195px;max-width:250px;flex-shrink:0}
+.pipeline-header{font-size:.8rem;font-weight:600;border-radius:var(--radius-sm) var(--radius-sm) 0 0;padding:.5rem .75rem}
+.pipeline-body{background:var(--gray-50);border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:.5rem;min-height:180px}
+.opp-card{
+    background:var(--bg-surface);border-radius:8px;padding:.6rem .7rem;margin-bottom:.4rem;
+    cursor:grab;font-size:.77rem;border:1px solid var(--border-light);
+    box-shadow:var(--shadow-xs);
+    transition:all var(--dur-fast) var(--ease-out);
+}
+.opp-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--brand-300)}
+.opp-card:active{cursor:grabbing;transform:rotate(1.5deg) scale(1.02)}
+
+
+/* =================================================================
+   Insight List Items
+   ================================================================= */
+.insight-item{padding:.55rem 0;border-bottom:1px solid var(--gray-100);transition:background var(--dur-fast)}
+.insight-item:last-child{border-bottom:none}
+.insight-item:hover{background:var(--gray-50);margin:0 -.5rem;padding-left:.5rem;padding-right:.5rem;border-radius:4px}
+.insight-link{color:var(--text-primary);text-decoration:none;font-size:.84rem;font-weight:500;transition:color var(--dur-fast)}
+.insight-link:hover{color:var(--brand-600)}
+.insight-meta{font-size:.72rem;color:var(--text-muted);margin-top:.1rem}
+
+
+/* =================================================================
+   Badges — 四色语义标签
+   ================================================================= */
+.badge-industry{background:var(--brand-100);color:var(--brand-700);padding:.18em .6em;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-org-type{background:#dcfce7;color:#166534;padding:.18em .6em;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-category{background:#fff7ed;color:#9a3412;padding:.18em .6em;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-source{background:#ede9fe;color:#5b21b6;padding:.18em .6em;border-radius:20px;font-size:.72rem;font-weight:600}
+
+
+/* =================================================================
+   Tabs, Buttons, Forms, Tables
+   ================================================================= */
+.nav-tabs{border-bottom:2px solid var(--border-light);gap:.25rem}
+.nav-tabs .nav-link{border:none;color:var(--text-secondary);font-size:.84rem;font-weight:500;padding:.6rem 1.1rem;border-radius:var(--radius-sm) var(--radius-sm) 0 0;transition:all var(--dur-fast)}
+.nav-tabs .nav-link:hover{color:var(--brand-600);background:var(--brand-50);border:none}
+.nav-tabs .nav-link.active{color:var(--brand-600);font-weight:600;border:none;border-bottom:2px solid var(--brand-500);background:transparent}
+
+.btn{border-radius:var(--radius-sm);font-weight:500;letter-spacing:.01em;transition:all var(--dur-fast) var(--ease-out)}
+.btn-primary{background:var(--brand-600);border-color:var(--brand-600)}
+.btn-primary:hover{background:var(--brand-700);border-color:var(--brand-700);transform:translateY(-1px);box-shadow:0 4px 12px rgba(29,78,216,.3)}
+.btn-outline-primary{color:var(--brand-600);border-color:var(--brand-300)}
+.btn-outline-primary:hover{background:var(--brand-50);color:var(--brand-700);border-color:var(--brand-500)}
+.btn-sm{padding:.35rem .85rem;font-size:.8rem}
+
+.form-control,.form-select{border-radius:var(--radius-sm);border-color:var(--border-light);font-size:.84rem;transition:all var(--dur-fast)}
+.form-control:focus,.form-select:focus{border-color:var(--brand-400);box-shadow:0 0 0 3px rgba(48,105,240,.12)}
+
+.progress{background:var(--gray-100);border-radius:10px;height:6px}
+.progress-bar{border-radius:10px;background:linear-gradient(90deg,var(--brand-400),var(--brand-600))}
+
+.table{font-size:.84rem}
+.table th{font-weight:600;color:var(--text-secondary);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;border-bottom-width:1px}
+.table-hover tbody tr{transition:background var(--dur-fast)}
+.table-hover tbody tr:hover{background:var(--brand-50);cursor:default}
+
+.modal-content{border-radius:var(--radius-lg);border:none;box-shadow:var(--shadow-xl)}
+.modal-header{border-bottom:1px solid var(--border-light);padding:1rem 1.5rem}
+
+.toast-container{position:fixed;top:20px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+
+
+/* =================================================================
+   Responsive
+   ================================================================= */
+@media(max-width:1024px){
+    .sidebar{width:68px}
+    .sidebar .brand-text,.sidebar .nav-item span,.sidebar-footer small{display:none}
+    .sidebar-brand{justify-content:center;padding:1rem .5rem}
+    .sidebar-nav{padding:.5rem;align-items:center}
+    .nav-item{justify-content:center;padding:.55rem}
+    .nav-item i{margin:0}
+    .main-wrap{margin-left:68px}
+    .main-content{padding:1rem 1.25rem 2rem}
+    .topbar{padding:0 1.25rem}
+    .stat-grid{grid-template-columns:repeat(3,1fr)}
+    :root{--sidebar-w:68px}
+}
+@media(max-width:768px){
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .pipeline-column{min-width:150px}
+    .main-content{padding:.75rem 1rem 1.5rem}
+    .stat-card .stat-value{font-size:1.3rem}
+    .topbar{padding:0 1rem}
+}

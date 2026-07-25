@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% block title %}市场洞察与情报分析 — 长亭湖南作战指挥{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-eye"></i> 市场洞察与情报分析</h4>
+        <small class="text-muted">作战平台的"眼睛"——感知湖南网络安全市场整体态势</small>
+    </div>
+</div>
+
+<!-- 模块Tab导航 -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab=='policy' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-policy" type="button">
+            <i class="bi bi-bullseye"></i> 政策雷达
+            <span class="badge bg-primary ms-1">{{ policy_list|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab=='bidding' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-bidding" type="button">
+            <i class="bi bi-file-earmark-text"></i> 招投标情报
+            <span class="badge bg-success ms-1">{{ bid_list|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab=='heatmap' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-heatmap" type="button">
+            <i class="bi bi-map"></i> 区域热力地图
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab=='news' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-news" type="button">
+            <i class="bi bi-graph-up"></i> 行业动态
+            <span class="badge bg-info ms-1">{{ news_list|length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- ==================== 模块1: 政策雷达 ==================== -->
+    <div class="tab-pane fade {% if active_tab=='policy' %}show active{% endif %}" id="tab-policy">
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <div class="chart-card"><div id="policyTypeChart" style="height:180px;"></div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="fw-bold"><i class="bi bi-info-circle text-primary"></i> 数据来源</h6>
+                        <ul class="small text-muted mb-0 ps-3">
+                            <li>湖南省工信厅 (gxt.hunan.gov.cn)</li>
+                            <li>湖南省人民政府门户网</li>
+                            <li>湖南省委网信办</li>
+                            <li>国家互联网信息办公室</li>
+                            <li>工信部网络安全管理局</li>
+                            <li>湖南省通信管理局</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关键词快速过滤 -->
+        <div class="d-flex flex-wrap gap-1 mb-3">
+            <span class="text-muted small me-2">关键词：</span>
+            {% for kw in ['网络安全','数据安全','工业互联网安全','等保','关基','数字政府'] %}
+            <span class="badge bg-light text-dark border">{{ kw }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="row g-3">
+            {% for p in policy_list %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100 border-start border-3 border-{{ 'danger' if p.impact_level=='高' else 'warning' if p.impact_level=='中' else 'secondary' }} policy-card"
+                     style="cursor:pointer;"
+                     onclick="showPolicyDetail({{ p.id }})"
+                     data-policy='{{ {'id':p.id,'title':p.title,'issuing_body':p.issuing_body or '','policy_type':p.policy_type or '','effective_date':p.effective_date or '','impact_level':p.impact_level or '','affected_industries':p.affected_industries or '','compliance_deadline':p.compliance_deadline or '','opportunity_relevance':p.opportunity_relevance or '','source_url':p.source_url or '','published_at':p.published_at or ''} | tojson | forceescape }}'>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="badge bg-outline-primary text-primary">{{ p.policy_type }}</span>
+                            <span class="badge bg-{{ 'danger' if p.impact_level=='高' else 'warning' if p.impact_level=='中' else 'secondary' }}">{{ p.impact_level }}影响</span>
+                        </div>
+                        <h6 class="fw-bold small">{{ p.title }}</h6>
+                        <div class="small text-muted mb-2">
+                            <span><i class="bi bi-building"></i> {{ p.issuing_body or '' }}</span>
+                            {% if p.effective_date %}<span class="ms-2"><i class="bi bi-calendar-check"></i> {{ p.effective_date }}</span>{% endif %}
+                        </div>
+                        {% if p.opportunity_relevance %}
+                        <div class="p-2 bg-success-subtle rounded small">
+                            <span class="fw-medium text-success">💡 商机关联：</span>{{ p.opportunity_relevance[:120] }}{% if p.opportunity_relevance|length > 120 %}...{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if p.compliance_deadline %}
+                        <small class="text-danger"><i class="bi bi-clock"></i> 合规截止：{{ p.compliance_deadline }}</small>
+                        {% endif %}
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ p.published_at or '' }}</small>
+                            <small class="text-primary"><i class="bi bi-arrow-right-circle"></i> 查看详情</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-4 text-muted">暂无政策数据</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ==================== 模块2: 招投标情报 ==================== -->
+    <div class="tab-pane fade {% if active_tab=='bidding' %}show active{% endif %}" id="tab-bidding">
+        <!-- 数据来源 + 关键词 -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-2">
+                        <h6 class="fw-bold small mb-1"><i class="bi bi-globe text-success"></i> 数据来源</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% set sources = ['湖南招标投标监管网','湖南政府采购网','中央政府采购网','中国招标投标公共服务平台','国电投电子商务平台','中国邮政采购平台'] %}
+                            {% for src in sources %}<span class="badge bg-light text-dark small">{{ src }}</span>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-2">
+                        <h6 class="fw-bold small mb-1"><i class="bi bi-tags text-warning"></i> 监控关键词</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for kw in ['WAF','防火墙','安全服务','等保','渗透测试','安全运维','网络安全','数据安全','雷池','洞鉴','牧云','万象'] %}
+                            <span class="badge bg-warning-subtle text-warning small">{{ kw }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-card"><div id="bidCatChart" style="height:130px;"></div></div>
+            </div>
+        </div>
+
+        <!-- 招标列表 -->
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>项目名称</th>
+                        <th>采购单位</th>
+                        <th>中标方</th>
+                        <th>金额(万)</th>
+                        <th>产品类别</th>
+                        <th>发布日期</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bid_list %}
+                    <tr>
+                        <td class="small fw-medium" style="max-width:300px;">
+                            {{ b.project_name or '-' }}
+                            {% if b.source_url %}<a href="{{ b.source_url | safe }}" target="_blank" class="ms-1"><i class="bi bi-box-arrow-up-right small"></i></a>{% endif %}
+                        </td>
+                        <td class="small">{{ b.bidder_name or '-' }}</td>
+                        <td class="small">
+                            <span class="{% if b.winner_name and '长亭' in b.winner_name %}text-success fw-bold{% endif %}">
+                                {{ b.winner_name or '-' }}
+                            </span>
+                        </td>
+                        <td class="small text-end">{{ '%.1f'|format(b.bid_amount) if b.bid_amount else '-' }}</td>
+                        <td><span class="badge bg-outline-secondary text-secondary">{{ b.product_category or '-' }}</span></td>
+                        <td class="small text-nowrap">{{ b.publish_date or '-' }}</td>
+                        <td>
+                            {% if b.is_won %}
+                            <span class="badge bg-success">我方中标</span>
+                            {% else %}
+                            <span class="badge bg-outline-secondary text-secondary">关注</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">暂无招标数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== 模块3: 区域热力地图 ==================== -->
+    <div class="tab-pane fade {% if active_tab=='heatmap' %}show active{% endif %}" id="tab-heatmap">
+        <div class="row mb-3">
+            <div class="col-md-7">
+                <div class="chart-card"><div id="cityHeatBar" style="height:400px;"></div></div>
+            </div>
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="fw-bold"><i class="bi bi-bar-chart text-primary"></i> 热力指数说明</h6>
+                        <p class="small text-muted">热力 = 客户数×2 + 招标数×3 + 商机数×2</p>
+                        <hr>
+                        <div class="row g-2">
+                            {% for c in city_heat_full %}
+                            {% if c.heat > 0 %}
+                            <div class="col-6">
+                                <div class="p-2 border rounded small">
+                                    <span class="fw-bold">{{ c.name }}</span>
+                                    <div class="d-flex justify-content-between text-muted mt-1">
+                                        <span>客户{{ c.customer_count }}</span>
+                                        <span>招标{{ c.bid_count }}</span>
+                                        <span>商机{{ c.opp_count }}</span>
+                                    </div>
+                                    <div class="progress mt-1" style="height:4px;">
+                                        {% set max_heat = city_heat_full | map(attribute='heat') | max %}
+                                        {% set pct = (c.heat / max_heat * 100) if max_heat > 0 else 0 %}
+                                        <div class="progress-bar bg-{{ 'danger' if pct>70 else 'warning' if pct>30 else 'info' }}" style="width:{{ pct }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted"><i class="bi bi-info-circle"></i> 数据来源：招投标数据（各平台汇总）+ 企业工商数据 + 行业报告（IDC/信通院/数说安全等）</div>
+    </div>
+
+    <!-- ==================== 模块4: 行业动态 ==================== -->
+    <div class="tab-pane fade {% if active_tab=='news' %}show active{% endif %}" id="tab-news">
+        <!-- 分类过滤 -->
+        <div class="d-flex flex-wrap gap-1 mb-3">
+            <a href="?tab=news" class="btn btn-sm {% if not news_category %}btn-primary{% else %}btn-outline-primary{% endif %}">全部</a>
+            {% for cat, cnt in news_cats %}
+            <a href="?tab=news&news_cat={{ cat }}" class="btn btn-sm {% if news_category==cat %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ cat }} <span class="badge bg-secondary ms-1">{{ cnt }}</span></a>
+            {% endfor %}
+        </div>
+
+        <div class="row g-3">
+            {% for n in news_list %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100 news-card"
+                     style="cursor:pointer;"
+                     onclick="showNewsDetail({{ n.id }})"
+                     data-news='{{ {'id':n.id,'title':n.title,'summary':n.summary or '','source':n.source or '','source_url':n.source_url or '','category':n.category or '','published_at':n.published_at or ''} | tojson | forceescape }}'>
+                    <div class="card-body">
+                        <span class="badge bg-outline-info text-info mb-2">{{ n.category }}</span>
+                        <h6 class="fw-bold small">{{ n.title }}</h6>
+                        {% if n.summary %}<p class="small text-muted mb-2" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ n.summary }}</p>{% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="bi bi-newspaper"></i> {{ n.source or '' }}</small>
+                            <small class="text-primary"><i class="bi bi-arrow-right-circle"></i> 查看详情</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-4 text-muted">暂无行业动态</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+<!-- 政策详情模态框 -->
+<div class="modal fade" id="policyDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <span id="policyModalBadge" class="badge me-2"></span>
+                <span id="policyModalImpact" class="badge"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <h5 class="fw-bold mb-3" id="policyModalTitle"></h5>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><small class="text-muted">发布机构</small><div class="fw-medium" id="policyModalBody"></div></div>
+                    <div class="col-md-3"><small class="text-muted">生效日期</small><div class="fw-medium" id="policyModalDate"></div></div>
+                    <div class="col-md-3"><small class="text-muted">发布日期</small><div class="fw-medium" id="policyModalPubDate"></div></div>
+                </div>
+                <div class="row g-2 mb-3" id="policyModalDeadlineRow" style="display:none;">
+                    <div class="col-md-6"><small class="text-danger">合规截止日期</small><div class="fw-bold text-danger" id="policyModalDeadline"></div></div>
+                    <div class="col-md-6"><small class="text-muted">影响行业</small><div class="fw-medium" id="policyModalIndustries"></div></div>
+                </div>
+                <div id="policyModalNoDeadline" class="row g-2 mb-3">
+                    <div class="col-12"><small class="text-muted">影响行业</small><div class="fw-medium" id="policyModalIndustries2"></div></div>
+                </div>
+                <div class="p-3 bg-success-subtle rounded" id="policyModalRelevance" style="display:none;">
+                    <small class="fw-bold text-success">💡 商机关联</small>
+                    <p class="mb-0 mt-1 small" id="policyModalRelevanceText"></p>
+                </div>
+                <div id="policyModalNoRelevance" class="text-muted small" style="display:none;">暂无商机关联分析</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <a href="#" target="_blank" class="btn btn-sm btn-outline-secondary" id="policyModalSourceBtn"><i class="bi bi-box-arrow-up-right"></i> 查看原文</a>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 行业动态详情模态框 -->
+<div class="modal fade" id="newsDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <span id="newsModalBadge" class="badge me-2"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <h5 class="fw-bold mb-3" id="newsModalTitle"></h5>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><small class="text-muted">来源</small><div class="fw-medium" id="newsModalSource"></div></div>
+                    <div class="col-md-6"><small class="text-muted">发布日期</small><div class="fw-medium" id="newsModalDate"></div></div>
+                </div>
+                <hr>
+                <h6 class="fw-bold small text-muted">摘要</h6>
+                <p class="small" id="newsModalSummary" style="line-height:1.8;"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <a href="#" target="_blank" class="btn btn-sm btn-outline-secondary" id="newsModalSourceBtn"><i class="bi bi-box-arrow-up-right"></i> 查看原文</a>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// ---- 缓存数据（从 data-* 解析） ----
+var policyData = {};
+document.querySelectorAll('.policy-card').forEach(function(el){
+    var raw = el.getAttribute('data-policy');
+    if(raw){ var p = JSON.parse(raw); policyData[p.id] = p; }
+});
+var newsData = {};
+document.querySelectorAll('.news-card').forEach(function(el){
+    var raw = el.getAttribute('data-news');
+    if(raw){ var n = JSON.parse(raw); newsData[n.id] = n; }
+});
+
+// ---- 政策详情 ----
+function showPolicyDetail(id){
+    var p = policyData[id];
+    if(!p) return;
+
+    var badgeMap = {'部门联合规章':'bg-primary','部门规章':'bg-primary','国家标准':'bg-info','行业标准':'bg-warning','地方政策':'bg-success','行业监管':'bg-danger'};
+    document.getElementById('policyModalBadge').textContent = p.policy_type;
+    document.getElementById('policyModalBadge').className = 'badge ' + (badgeMap[p.policy_type] || 'bg-secondary') + ' me-2';
+
+    var impactClass = p.impact_level=='高'?'bg-danger':p.impact_level=='中'?'bg-warning':'bg-secondary';
+    document.getElementById('policyModalImpact').textContent = p.impact_level + '影响';
+    document.getElementById('policyModalImpact').className = 'badge ' + impactClass;
+
+    document.getElementById('policyModalTitle').textContent = p.title;
+    document.getElementById('policyModalBody').textContent = p.issuing_body || '-';
+    document.getElementById('policyModalDate').textContent = p.effective_date || '-';
+    document.getElementById('policyModalPubDate').textContent = p.published_at || '-';
+
+    if(p.compliance_deadline){
+        document.getElementById('policyModalDeadlineRow').style.display = '';
+        document.getElementById('policyModalNoDeadline').style.display = 'none';
+        document.getElementById('policyModalDeadline').textContent = p.compliance_deadline;
+        document.getElementById('policyModalIndustries').textContent = p.affected_industries || '-';
+    }else{
+        document.getElementById('policyModalDeadlineRow').style.display = 'none';
+        document.getElementById('policyModalNoDeadline').style.display = '';
+        document.getElementById('policyModalIndustries2').textContent = p.affected_industries || '-';
+    }
+
+    if(p.opportunity_relevance){
+        document.getElementById('policyModalRelevance').style.display = '';
+        document.getElementById('policyModalNoRelevance').style.display = 'none';
+        document.getElementById('policyModalRelevanceText').textContent = p.opportunity_relevance;
+    }else{
+        document.getElementById('policyModalRelevance').style.display = 'none';
+        document.getElementById('policyModalNoRelevance').style.display = '';
+    }
+
+    var btn = document.getElementById('policyModalSourceBtn');
+    if(p.source_url){
+        btn.href = p.source_url; btn.classList.remove('disabled');
+    }else{
+        btn.href = '#'; btn.classList.add('disabled');
+    }
+
+    new bootstrap.Modal(document.getElementById('policyDetailModal')).show();
+}
+
+// ---- 行业动态详情 ----
+function showNewsDetail(id){
+    var n = newsData[id];
+    if(!n) return;
+
+    var catBadgeMap = {'政策法规':'bg-primary','行业趋势':'bg-success','竞品动态':'bg-danger','安全事件':'bg-warning','技术前沿':'bg-info'};
+    document.getElementById('newsModalBadge').textContent = n.category;
+    document.getElementById('newsModalBadge').className = 'badge ' + (catBadgeMap[n.category] || 'bg-secondary') + ' me-2';
+
+    document.getElementById('newsModalTitle').textContent = n.title;
+    document.getElementById('newsModalSource').textContent = n.source || '-';
+    document.getElementById('newsModalDate').textContent = n.published_at || '-';
+    document.getElementById('newsModalSummary').textContent = n.summary || '暂无摘要';
+
+    var btn = document.getElementById('newsModalSourceBtn');
+    if(n.source_url){
+        btn.href = n.source_url; btn.classList.remove('disabled');
+    }else{
+        btn.href = '#'; btn.classList.add('disabled');
+    }
+
+    new bootstrap.Modal(document.getElementById('newsDetailModal')).show();
+}
+(function(){
+    // ---- 政策类型分布 ----
+    var policyTypes = {{ policy_types|tojson }};
+    if(policyTypes.length){
+        var c1 = echarts.init(document.getElementById('policyTypeChart'));
+        c1.setOption({
+            tooltip:{trigger:'item'},
+            series:[{type:'pie',radius:['50%','75%'],center:['50%','50%'],
+                label:{formatter:'{b}\n{d}%'},emphasis:{label:{fontSize:14}},
+                data:policyTypes.map(function(d){return {name:d[0],value:d[1]};}),
+                itemStyle:{borderRadius:4,borderColor:'#fff',borderWidth:2}
+            }],
+            color:['#1a73e8','#e8710a','#0d904f','#d93025','#9334e6','#f9ab00']
+        });
+    }
+
+    // ---- 招标产品分类 ----
+    var bidCats = {{ bid_cat_stats|tojson }};
+    if(bidCats.length){
+        var c2 = echarts.init(document.getElementById('bidCatChart'));
+        c2.setOption({
+            tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+            grid:{left:'3%',right:'5%',top:5,bottom:5,containLabel:true},
+            xAxis:{type:'value',show:false},
+            yAxis:{type:'category',data:bidCats.map(function(d){return d[0]||'未分类';}).reverse(),axisLabel:{fontSize:10}},
+            series:[{type:'bar',data:bidCats.map(function(d){return d[1];}).reverse(),
+                itemStyle:{borderRadius:[0,4,4,0],color:'#0d904f'},label:{show:true,position:'right',fontSize:10}}]
+        });
+    }
+
+    // ---- 区域热力地图 ----
+    var cityData = {{ city_heat_full|tojson }};
+    var names = cityData.map(function(d){return d.name;});
+    var heats = cityData.map(function(d){return d.heat;});
+    var maxH = Math.max.apply(null, heats) || 1;
+
+    var c3 = echarts.init(document.getElementById('cityHeatBar'));
+    c3.setOption({
+        title:{text:'湖南14地市 · 市场热力指数',left:'center',top:0,textStyle:{fontSize:13}},
+        tooltip:{trigger:'axis',axisPointer:{type:'shadow'},
+            formatter:function(ps){
+                var d=cityData[ps[0].dataIndex];
+                return '<b>'+d.name+'</b><br/>热力指数: '+d.heat+'<br/>客户: '+d.customer_count+' | 招标: '+d.bid_count+' | 商机: '+d.opp_count;
+            }
+        },
+        grid:{left:'15%',right:'5%',top:40,bottom:20,containLabel:true},
+        xAxis:{type:'value',name:'热力指数'},
+        yAxis:{type:'category',data:names.reverse(),axisLabel:{fontSize:11}},
+        series:[{type:'bar',
+            data:cityData.map(function(d,i){
+                var ratio = d.heat/maxH;
+                var color = ratio>0.7?'#d93025':ratio>0.35?'#e8710a':ratio>0.1?'#1a73e8':'#dadce0';
+                return {value:d.heat,itemStyle:{color:color,borderRadius:[0,6,6,0]}};
+            }).reverse(),
+            label:{show:true,position:'right',formatter:function(p){return p.value>0?p.value:'';}}
+        }]
+    });
+})();
+
+// Tab切换时自动resize图表
+document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(btn){
+    btn.addEventListener('shown.bs.tab', function(){
+        setTimeout(function(){
+            [document.getElementById('policyTypeChart'),
+             document.getElementById('bidCatChart'),
+             document.getElementById('cityHeatBar')].forEach(function(el){
+                if(el){
+                    var inst = echarts.getInstanceByDom(el);
+                    if(inst) inst.resize();
+                }
+            });
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

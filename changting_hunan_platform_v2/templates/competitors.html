@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}竞争情报 — 长亭湖南作战指挥{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-shield-exclamation"></i> 竞争情报</h4>
+<div class="row g-3 mb-3"><div class="col-md-6"><div class="chart-card"><h6 class="chart-title">竞品活跃度</h6><div id="compBar" style="height:240px;"></div></div></div><div class="col-md-6"><div class="chart-card"><h6 class="chart-title">威胁等级分布</h6><div id="threatPie" style="height:240px;"></div></div></div></div>
+<form class="filter-bar row g-2 mb-3" method="get">
+    <div class="col-md-3"><select name="competitor" class="form-select form-select-sm"><option value="">全部竞品</option>{% for n in competitor_names %}<option value="{{ n }}" {% if competitor==n %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="threat" class="form-select form-select-sm"><option value="">全部威胁</option><option value="高" {% if threat=='高' %}selected{% endif %}>高</option><option value="中" {% if threat=='中' %}selected{% endif %}>中</option><option value="低" {% if threat=='低' %}selected{% endif %}>低</option></select></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary btn-sm w-100">筛选</button></div><div class="col-md-2"><a href="/competitors" class="btn btn-outline-secondary btn-sm w-100">重置</a></div>
+</form>
+<div class="row g-3">{% for item in intel_list %}<div class="col-lg-4 col-md-6"><div class="card intel-card h-100 border-{{ 'danger' if item.threat_level=='高' else 'warning' if item.threat_level=='中' else 'secondary' }}"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2"><span class="fw-bold">{{ item.competitor_name }}</span><span class="badge bg-{{ 'danger' if item.threat_level=='高' else 'warning' if item.threat_level=='中' else 'secondary' }}">{{ item.threat_level }}威胁</span></div>
+    <h6 class="card-title small">{{ item.title or '' }}</h6>
+    <div class="d-flex gap-1 mb-2">{% if item.activity_type %}<span class="badge bg-light text-dark">{{ item.activity_type }}</span>{% endif %}{% if item.product_category %}<span class="badge-category">{{ item.product_category }}</span>{% endif %}</div>
+    {% if item.description %}<p class="small text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ item.description }}</p>{% endif %}
+    {% if item.our_countermeasure %}<div class="mt-2 p-2 bg-success-subtle rounded small"><span class="fw-medium text-success">💡 应对：</span>{{ item.our_countermeasure }}</div>{% endif %}
+    <div class="mt-2 small text-muted">{% if item.source_url %}<a href="{{ item.source_url | safe }}" target="_blank" class="text-decoration-none"><i class="bi bi-box-arrow-up-right"></i> {{ item.source or '原文' }}</a>{% else %}<span>{{ item.source or '' }}</span>{% endif %}<span class="ms-2">{{ item.occurred_at }}</span></div>
+</div></div></div>{% else %}<div class="col-12 text-center py-5 text-muted">暂无竞争情报</div>{% endfor %}</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(function(){var c=echarts.init(document.getElementById('compBar'));var d={{ competitor_stats|tojson }};c.setOption({tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},grid:{left:'3%',right:'10%',containLabel:true},xAxis:{type:'value'},yAxis:{type:'category',data:d.map(function(x){return x[0];}).reverse()},series:[{type:'bar',data:d.map(function(x){return x[1];}).reverse(),itemStyle:{borderRadius:[0,4,4,0],color:'#e74c3c'},label:{show:true,position:'right'}}]});})();
+(function(){var c=echarts.init(document.getElementById('threatPie'));var d={{ threat_stats|tojson }};c.setOption({tooltip:{trigger:'item'},series:[{type:'pie',radius:['40%','70%'],data:d.map(function(x){return{name:x[0]+'威胁',value:x[1]};}),label:{formatter:'{b}: {c}'}}]});})();
+</script>
+{% endblock %}

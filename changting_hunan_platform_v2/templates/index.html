@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}驾驶舱 — 长亭湖南{% endblock %}
+{% block page_title %}驾驶舱{% endblock %}
+{% block page_subtitle %}市场洞察与销售赋能 · 七维作战视图{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>{% endblock %}
+{% block content %}
+
+<!-- KPI卡片 -->
+<div class="stat-grid mb-4">
+    <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-broadcast"></i></div><div class="stat-value">{{ signal_total }}<small class="text-danger ms-1">{{ signal_high }}高</small></div><div class="stat-label">洞察信号</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#d1fae5;color:#10b981;"><i class="bi bi-bullseye"></i></div><div class="stat-value">{{ opp_active }}</div><div class="stat-label">活跃商机</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-cash-stack"></i></div><div class="stat-value">{{ "%.0f"|format(opp_amount) }}<small>万</small></div><div class="stat-label">预计签约额</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#e0e7ff;color:#6366f1;"><i class="bi bi-plus-circle"></i></div><div class="stat-value">{{ new_this_month }}</div><div class="stat-label">本月新线索</div></div>
+    <div class="stat-card pulse"><div class="stat-icon" style="background:#fee2e2;color:#ef4444;"><i class="bi bi-lightning-charge"></i></div><div class="stat-value">{% if hw_days_remaining is not none %}{{ hw_days_remaining }}{% else %}-{% endif %}<small>天</small></div><div class="stat-label">HW倒计时</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#ede9fe;color:#7c3aed;"><i class="bi bi-exclamation-triangle"></i></div><div class="stat-value">{{ signal_high }}</div><div class="stat-label">高影响预警</div></div>
+</div>
+
+<!-- 图表行 -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-5"><div class="chart-card">
+        <h6 class="chart-title"><i class="bi bi-compass"></i>七维洞察来源分布</h6>
+        <div id="sourceChart" style="height:340px;"></div>
+    </div></div>
+    <div class="col-lg-3"><div class="chart-card">
+        <h6 class="chart-title"><i class="bi bi-funnel"></i>商机漏斗</h6>
+        <div id="funnelChart" style="height:340px;"></div>
+    </div></div>
+    <div class="col-lg-4"><div class="chart-card">
+        <h6 class="chart-title"><i class="bi bi-exclamation-circle"></i>最新洞察信号</h6>
+        {% for s in latest_signals %}
+        <div class="insight-item">
+            <span class="badge bg-{{ 'danger' if s.impact_level=='高' else 'warning' if s.impact_level=='中' else 'secondary' }} me-1">{{ s.impact_level }}</span>
+            <span class="badge-source me-1">{{ s.signal_source }}</span>
+            <a href="/signals" class="insight-link">{{ s.title[:32] }}{% if s.title|length>32 %}...{% endif %}</a>
+            <div class="insight-meta">{{ s.detected_at or '' }}{% if s.action_suggestion %}<span class="text-success ms-1">💡有建议</span>{% endif %}</div>
+        </div>
+        {% endfor %}
+        <a href="/signals" class="btn btn-sm btn-outline-primary w-100 mt-2">进入信号中心 →</a>
+    </div></div>
+</div>
+
+<!-- 需关注客户 + 业绩概览 -->
+<div class="row g-3">
+    <div class="col-lg-8"><div class="chart-card">
+        <h6 class="chart-title"><i class="bi bi-building"></i>需关注的客户（有未处理信号）</h6>
+        <div class="row g-2">
+            {% for item in focus_list %}
+            <div class="col-md-6"><div class="border rounded-3 p-2 d-flex justify-content-between align-items-center focus-item">
+                <div><a href="/customer/{{ item.customer.id }}" class="fw-medium text-decoration-none text-dark">{{ item.customer.name }}</a><span class="badge-industry ms-1">{{ item.customer.industry or '' }}</span></div>
+                <span class="badge rounded-pill bg-{{ 'danger' if item.urgency>=3 else 'warning' }}">{{ item.signal_count }}个信号</span>
+            </div></div>{% endfor %}
+        </div>
+    </div></div>
+    <div class="col-lg-4"><div class="chart-card text-center">
+        <h6 class="chart-title"><i class="bi bi-trophy"></i>业绩总览</h6>
+        <div class="py-3"><div class="display-5 fw-bold text-success mb-1">{{ "%.0f"|format(opp_won_amount) }}<small class="fs-5">万</small></div><div class="text-muted">已赢单金额</div></div>
+        <hr class="my-2"><div class="row text-center"><div class="col-6"><div class="fw-bold fs-5">{{ customer_count }}</div><small class="text-muted">目标客户</small></div><div class="col-6"><div class="fw-bold fs-5">{{ opp_total }}</div><small class="text-muted">商机总数</small></div></div>
+    </div></div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(function(){
+    var c=echarts.init(document.getElementById('sourceChart'));
+    c.setOption({
+        tooltip:{},radar:{radius:'62%',center:['50%','55%'],
+            indicator:[{name:'政策合规',max:6},{name:'安全事件',max:6},{name:'招投标',max:6},{name:'竞争情报',max:6},{name:'技术趋势',max:6},{name:'HW周期',max:6}],
+            axisName:{fontSize:11,color:'#64748b'}},
+        series:[{type:'radar',data:[{value:{{ signal_source_data|tojson|safe }},name:'信号来源',areaStyle:{color:'rgba(48,105,240,.08)'},lineStyle:{color:'#3069f0',width:2},itemStyle:{color:'#3069f0'},symbol:'emptyCircle',symbolSize:5}]}]
+    });
+})();
+(function(){
+    var c=echarts.init(document.getElementById('funnelChart'));
+    c.setOption({color:["#3069f0","#4f8cf7","#7eb0fb","#b6d4fe","#64748b","#475569","#059669","#94a3b8"],tooltip:{trigger:'item',formatter:'{b}: {c}'},series:[{type:'funnel',left:'10%',right:'10%',minSize:'20%',maxSize:'100%',gap:3,data:{{ stage_data|tojson }},label:{show:true,position:'inside',formatter:'{b}\n{c}',fontSize:11},itemStyle:{borderColor:'#fff',borderWidth:1}}]});
+})();
+</script>
+{% endblock %}

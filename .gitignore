@@ -34,3 +34,8 @@ node_modules/
 
 # Claude
 .claude/
+
+# Database & session (do not commit)
+*.db
+.tyc_session.json
+.img_cache/

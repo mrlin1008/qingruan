@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}市场洞察 — 长亭湖南作战指挥{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-graph-up"></i> 市场洞察</h4>
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link {% if tab=='policies' %}active{% endif %}" href="?tab=policies"><i class="bi bi-journal-text"></i> 政策法规 ({{ policies|length }})</a></li><li class="nav-item"><a class="nav-link {% if tab=='events' %}active{% endif %}" href="?tab=events"><i class="bi bi-bug"></i> 安全事件 ({{ events|length }})</a></li><li class="nav-item"><a class="nav-link {% if tab=='news' %}active{% endif %}" href="?tab=news"><i class="bi bi-newspaper"></i> 行业动态 ({{ news_list|length }})</a></li></ul>
+
+{% if tab=='policies' %}<div class="row g-3">{% for p in policies %}<div class="col-lg-4 col-md-6"><div class="card insight-card h-100 border-{{ 'danger' if p.impact_level=='高' else 'warning' if p.impact_level=='中' else 'secondary' }}"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2"><span class="badge bg-{{ 'danger' if p.impact_level=='高' else 'warning' if p.impact_level=='中' else 'secondary' }}">{{ p.impact_level }}影响</span>{% if p.policy_type %}<span class="badge bg-light text-dark">{{ p.policy_type }}</span>{% endif %}</div>
+    <h6 class="card-title">{{ p.title }}</h6>
+    <div class="small text-muted"><div>📋 {{ p.issuing_body or '-' }}</div>{% if p.effective_date %}<div>📅 生效: {{ p.effective_date }}</div>{% endif %}{% if p.compliance_deadline %}<div>⏰ 截止: {{ p.compliance_deadline }}</div>{% endif %}{% if p.affected_industries %}<div>🏭 {{ p.affected_industries }}</div>{% endif %}</div>
+    {% if p.opportunity_relevance %}<div class="mt-2 p-2 bg-success-subtle rounded small"><span class="fw-medium text-success">💡 商机关联：</span>{{ p.opportunity_relevance }}</div>{% endif %}
+    <div class="mt-2 small">{% if p.source_url %}<a href="{{ p.source_url | safe }}" target="_blank" class="text-decoration-none">查看原文 →</a>{% endif %}<span class="ms-2 text-muted">{{ p.published_at }}</span></div>
+</div></div></div>{% endfor %}</div>
+
+{% elif tab=='events' %}<div class="row g-3">{% for e in events %}<div class="col-lg-4 col-md-6"><div class="card insight-card h-100 border-{{ 'danger' if e.severity=='严重' else 'warning' if e.severity=='高' else 'info' }}"><div class="card-body">
+    <div class="d-flex justify-content-between mb-2"><span class="badge bg-{{ 'danger' if e.severity=='严重' else 'warning' if e.severity=='高' else 'info' }}">{{ e.severity }}</span>{% if e.event_type %}<span class="badge bg-light text-dark">{{ e.event_type }}</span>{% endif %}</div>
+    <h6 class="card-title">{{ e.title }}</h6>
+    <div class="small text-muted">{% if e.affected_org %}<div>🎯 {{ e.affected_org }}</div>{% endif %}{% if e.location %}<div>📍 {{ e.location }}</div>{% endif %}{% if e.estimated_loss %}<div>💰 {{ e.estimated_loss }}</div>{% endif %}</div>
+    {% if e.description %}<p class="small text-muted mt-1">{{ e.description[:120] }}{% if e.description|length>120 %}...{% endif %}</p>{% endif %}
+    {% if e.our_relevance %}<div class="mt-2 p-2 bg-warning-subtle rounded small"><span class="fw-medium">🔑 切入点：</span>{{ e.our_relevance }}</div>{% endif %}
+    {% if e.target_customers_to_contact %}<div class="mt-1 small text-success"><i class="bi bi-telephone"></i> 建议联系：{{ e.target_customers_to_contact }}</div>{% endif %}
+    <div class="mt-2 small">{% if e.source_url %}<a href="{{ e.source_url | safe }}" target="_blank" class="text-decoration-none">查看原文 →</a>{% endif %}<span class="ms-2 text-muted">{{ e.occurred_at }}</span></div>
+</div></div></div>{% endfor %}</div>
+
+{% elif tab=='news' %}<div class="row g-3">{% for n in news_list %}<div class="col-lg-4 col-md-6"><div class="card insight-card h-100"><div class="card-body">
+    {% if n.category %}<span class="badge bg-primary-subtle text-primary mb-1">{{ n.category }}</span>{% endif %}
+    <h6 class="card-title">{% if n.source_url %}<a href="{{ n.source_url | safe }}" target="_blank" class="text-decoration-none text-dark">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}</h6>
+    {% if n.summary %}<p class="small text-muted" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ n.summary }}</p>{% endif %}
+    <div class="small text-muted"><span>{{ n.source or '' }}</span><span class="ms-2">{{ n.published_at }}</span></div>
+</div></div></div>{% endfor %}</div>{% endif %}
+{% endblock %}

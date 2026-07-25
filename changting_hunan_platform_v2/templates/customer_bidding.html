@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} 招投标 — 天眼查{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/customer/{{ customer.id }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回客户详情</a>
+    <h4 class="mb-0">{{ customer.name }}</h4>
+    <span class="badge-industry">{{ customer.industry or '' }}</span>
+</div>
+
+<h5 class="mb-3"><i class="bi bi-file-earmark-text"></i> 本年度招投标记录（数据来源：天眼查）</h5>
+
+{% if error %}
+<div class="alert alert-warning">{{ error }}</div>
+{% elif not records %}
+<div class="alert alert-info">该客户本年度暂无招投标记录</div>
+{% else %}
+<div class="alert alert-success small">共 {{ records|length }} 条本年度记录</div>
+
+<div class="table-responsive">
+<table class="table table-hover table-sm">
+<thead class="table-light">
+<tr>
+    <th>项目名称</th>
+    <th>招标方</th>
+    <th>中标方</th>
+    <th class="text-end">金额(万)</th>
+    <th>日期</th>
+    <th></th>
+</tr>
+</thead>
+<tbody>
+{% for r in records %}
+<tr>
+    <td><span class="fw-medium small">{{ r.project_name }}</span></td>
+    <td><small>{{ r.bidder_name }}</small></td>
+    <td><small>{{ r.winner_name or '-' }}</small></td>
+    <td class="text-end">{% if r.bid_amount %}<span class="fw-bold text-danger">{{ "%.0f"|format(r.bid_amount) }}</span>{% else %}-{% endif %}</td>
+    <td><small>{{ r.publish_date }}</small></td>
+    <td>
+        {% if r.bid_url %}
+        <a href="{{ r.bid_url }}" target="_blank" class="badge bg-warning text-dark text-decoration-none">
+            <i class="bi bi-box-arrow-up-right"></i> 天眼查详情
+        </a>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+{% endblock %}
