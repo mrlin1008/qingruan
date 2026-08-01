@@ -1,0 +1,151 @@
+{% extends "admin_base.html" %}
+{% block title %}数据驾驶舱 — 益阳高新区智慧招商平台{% endblock %}
+{% block page_title %}数据驾驶舱{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- KPI 统计卡片 -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ lead_total }}</div>
+        <div class="stat-label">招商线索</div>
+        <div class="stat-sub">本月新增 {{ lead_new_month }} 条</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ project_negotiating }}</div>
+        <div class="stat-label">洽谈中项目</div>
+        <div class="stat-sub">签约项目 {{ project_signed }} 个</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="kpiAmount">{{ "%.0f"|format(project_amount) }}</div>
+        <div class="stat-label">签约金额（万元）</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ space_available }} / {{ space_total }}</div>
+        <div class="stat-label">可租 / 总空间</div>
+        <div class="stat-sub">使用率 {{ ((space_total-space_available)/space_total*100)|int if space_total else 0 }}%</div>
+    </div>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+    <!-- 项目漏斗 -->
+    <div class="card">
+        <div class="card-header">项目阶段漏斗</div>
+        <div class="card-body">
+            <div id="funnelChart" style="height:280px;"></div>
+        </div>
+    </div>
+
+    <!-- 线索来源 -->
+    <div class="card">
+        <div class="card-header">线索来源分布</div>
+        <div class="card-body">
+            <div id="sourceChart" style="height:280px;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top:20px;align-items:start;">
+    <!-- 赛道分布 -->
+    <div class="card">
+        <div class="card-header">四大赛道项目分布</div>
+        <div class="card-body">
+            <div id="trackChart" style="height:260px;"></div>
+        </div>
+    </div>
+
+    <!-- 近期跟进 -->
+    <div class="card">
+        <div class="card-header">近期跟进动态</div>
+        <div class="card-body">
+            {% if recent_followups %}
+            <div class="timeline">
+                {% for fu in recent_followups %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ fu.follow_date }} · {{ fu.creator.display_name if fu.creator else '' }}</div>
+                    <div class="timeline-content">
+                        {{ fu.content[:80] }}{% if fu.content|length > 80 %}...{% endif %}
+                        {% if fu.project %}
+                        <a href="/admin/projects" class="small" style="margin-left:4px;">[{{ fu.project.title[:20] }}]</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-tertiary text-center" style="padding:40px 0;">暂无跟进记录</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    // 漏斗图
+    var funnelDom = document.getElementById('funnelChart');
+    if (funnelDom) {
+        var funnelChart = echarts.init(funnelDom);
+        funnelChart.setOption({
+            tooltip: {trigger: 'item'},
+            series: [{
+                type: 'funnel',
+                left: '10%', width: '80%',
+                sort: 'descending',
+                gap: 2,
+                label: {show: true, position: 'inside', fontSize: 12},
+                data: {{ funnel | tojson | safe }}
+            }]
+        });
+        window.addEventListener('resize', function() { funnelChart.resize(); });
+    }
+
+    // 来源饼图
+    var sourceDom = document.getElementById('sourceChart');
+    if (sourceDom) {
+        var sourceChart = echarts.init(sourceDom);
+        sourceChart.setOption({
+            tooltip: {trigger: 'item'},
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                label: {fontSize: 11},
+                data: {{ source_data | tojson | safe }}
+            }]
+        });
+        window.addEventListener('resize', function() { sourceChart.resize(); });
+    }
+
+    // 赛道柱状图
+    var trackDom = document.getElementById('trackChart');
+    if (trackDom) {
+        var trackChart = echarts.init(trackDom);
+        trackChart.setOption({
+            tooltip: {trigger: 'axis'},
+            xAxis: {
+                type: 'category',
+                data: {{ track_data | map(attribute='name') | list | tojson | safe }},
+                axisLabel: {fontSize: 11}
+            },
+            yAxis: {type: 'value', minInterval: 1},
+            series: [{
+                type: 'bar',
+                data: {{ track_data | tojson | safe }},
+                itemStyle: {
+                    color: function(p) {
+                        var colors = ['#3b82f6','#0ca678','#f08c00','#8b5cf6','#ccc'];
+                        return colors[p.dataIndex % 5];
+                    }
+                }
+            }],
+            grid: {left: 40, right: 20, top: 10, bottom: 30}
+        });
+        window.addEventListener('resize', function() { trackChart.resize(); });
+    }
+})();
+</script>
+{% endblock %}

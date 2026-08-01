@@ -1,0 +1,229 @@
+{% extends "admin_base.html" %}
+{% block title %}内容管理 — 管理后台{% endblock %}
+{% block page_title %}内容管理{% endblock %}
+
+{% block content %}
+<button class="btn btn-primary btn-sm mb-3" onclick="showArticleModal()">
+    <i class="bi bi-plus-lg"></i> 新增文章
+</button>
+
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>分类</th>
+            <th>发布日期</th>
+            <th>状态</th>
+            <th>阅读量</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in articles %}
+        <tr>
+            <td><strong>{{ a.title }}</strong></td>
+            <td><span class="badge badge-neutral">{{ a.category }}</span></td>
+            <td>{{ a.publish_date or '-' }}</td>
+            <td><span class="badge {{ 'badge-success' if a.is_published else 'badge-warning' }}">{{ '已发布' if a.is_published else '草稿' }}</span></td>
+            <td>{{ a.view_count }}</td>
+            <td>
+                <button class="btn btn-xs btn-outline" onclick="editArticle({{ a.id }})"><i class="bi bi-pencil"></i></button>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-tertiary" style="padding:32px;">暂无内容</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="articleModal">
+    <div class="modal-backdrop" onclick="hideModal('articleModal')"></div>
+    <div class="modal-dialog" style="width:640px;">
+        <div class="modal-header">
+            <span id="articleModalTitle">新增文章</span>
+            <button class="modal-close" onclick="hideModal('articleModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="articleId">
+            <div class="form-group">
+                <label>标题</label>
+                <input type="text" id="articleTitle" class="form-control" placeholder="文章标题">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>分类</label>
+                    <select id="articleCategory" class="form-control">
+                        <option value="园区动态">园区动态</option>
+                        <option value="产业资讯">产业资讯</option>
+                        <option value="招商成果">招商成果</option>
+                        <option value="政策解读">政策解读</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>封面图</label>
+                    <div class="upload-area" id="coverUploadArea" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color 0.15s;position:relative;">
+                        <input type="file" id="coverFileInput" accept="image/*" style="display:none;" onchange="handleCoverFile(this.files[0])">
+                        <div id="coverUploadPrompt">
+                            <i class="bi bi-cloud-upload" style="font-size:28px;color:var(--text-tertiary);display:block;margin-bottom:8px;"></i>
+                            <span style="color:var(--text-secondary);font-size:13px;">点击或拖拽上传封面图</span>
+                            <span style="display:block;color:var(--text-tertiary);font-size:11px;margin-top:4px;">支持 JPG/PNG/GIF/WebP，≤10MB</span>
+                        </div>
+                        <div id="coverPreview" class="hidden" style="position:relative;">
+                            <img id="coverPreviewImg" src="" style="max-width:100%;max-height:200px;border-radius:6px;">
+                            <button type="button" class="btn btn-xs btn-danger" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation();clearCover()">&times;</button>
+                        </div>
+                        <div id="coverUploading" class="hidden" style="padding:16px;">
+                            <div class="skeleton" style="height:6px;width:200px;margin:0 auto 8px;border-radius:3px;"></div>
+                            <span style="color:var(--text-tertiary);font-size:12px;">上传中...</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="articleCover">
+                    <input type="text" id="articleCoverUrl" class="form-control mt-2" placeholder="或直接填写图片链接">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>摘要</label>
+                <textarea id="articleSummary" class="form-control" rows="2" placeholder="文章摘要"></textarea>
+            </div>
+            <div class="form-group">
+                <label>正文</label>
+                <textarea id="articleContent" class="form-control" rows="5" placeholder="文章内容"></textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>发布日期</label>
+                    <input type="date" id="articleDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>发布状态</label>
+                    <select id="articlePublished" class="form-control" style="width:auto;">
+                        <option value="1">已发布</option>
+                        <option value="0">草稿</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('articleModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveArticle()">保存</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// --- 封面图上传 ---
+var uploadArea = document.getElementById('coverUploadArea');
+var fileInput = document.getElementById('coverFileInput');
+
+uploadArea.addEventListener('click', function() { fileInput.click(); });
+
+// 拖拽支持
+uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); this.style.borderColor = 'var(--accent)'; });
+uploadArea.addEventListener('dragleave', function(e) { e.preventDefault(); this.style.borderColor = 'var(--border)'; });
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files.length) handleCoverFile(e.dataTransfer.files[0]);
+});
+
+function handleCoverFile(file) {
+    if (!file || !file.type.match(/image\//)) { alert('请选择图片文件'); return; }
+    if (file.size > 10 * 1024 * 1024) { alert('文件大小不能超过 10MB'); return; }
+
+    showCoverState('uploading');
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/api/upload/article-cover', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                document.getElementById('articleCover').value = d.url;
+                document.getElementById('coverPreviewImg').src = d.url;
+                showCoverState('preview');
+                // 同步清空URL输入框
+                document.getElementById('articleCoverUrl').value = '';
+            } else {
+                alert(d.msg || '上传失败');
+                showCoverState('prompt');
+            }
+        })
+        .catch(function(e) { alert('上传失败: ' + e.message); showCoverState('prompt'); });
+}
+
+function showCoverState(state) {
+    document.getElementById('coverUploadPrompt').classList.toggle('hidden', state !== 'prompt');
+    document.getElementById('coverPreview').classList.toggle('hidden', state !== 'preview');
+    document.getElementById('coverUploading').classList.toggle('hidden', state !== 'uploading');
+}
+
+function clearCover() {
+    document.getElementById('articleCover').value = '';
+    document.getElementById('coverPreviewImg').src = '';
+    fileInput.value = '';
+    showCoverState('prompt');
+}
+
+// 监听 URL 输入
+document.getElementById('articleCoverUrl').addEventListener('input', function() {
+    var url = this.value.trim();
+    if (url) {
+        document.getElementById('articleCover').value = url;
+        document.getElementById('coverPreviewImg').src = url;
+        showCoverState('preview');
+    } else if (!document.getElementById('articleCover').value) {
+        showCoverState('prompt');
+    }
+});
+
+function showArticleModal() {
+    document.getElementById('articleId').value = '';
+    document.getElementById('articleModalTitle').textContent = '新增文章';
+    document.getElementById('articleTitle').value = '';
+    document.getElementById('articleCategory').value = '园区动态';
+    document.getElementById('articleCover').value = '';
+    document.getElementById('articleCoverUrl').value = '';
+    clearCover();
+    document.getElementById('articleSummary').value = '';
+    document.getElementById('articleContent').value = '';
+    document.getElementById('articleDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('articlePublished').value = '1';
+    showModal('articleModal');
+}
+
+function editArticle(id) {
+    document.getElementById('articleId').value = id;
+    document.getElementById('articleModalTitle').textContent = '编辑文章';
+    showModal('articleModal');
+}
+
+function saveArticle() {
+    var id = document.getElementById('articleId').value;
+    var cover = document.getElementById('articleCover').value || document.getElementById('articleCoverUrl').value.trim();
+    var data = {
+        title: document.getElementById('articleTitle').value,
+        category: document.getElementById('articleCategory').value,
+        cover_image: cover,
+        summary: document.getElementById('articleSummary').value,
+        content: document.getElementById('articleContent').value,
+        publish_date: document.getElementById('articleDate').value,
+        is_published: document.getElementById('articlePublished').value === '1'
+    };
+    var url = id ? '/api/articles/' + id : '/api/articles';
+    fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '操作失败'); })
+    .catch(function(e) { alert('网络错误'); });
+}
+</script>
+{% endblock %}

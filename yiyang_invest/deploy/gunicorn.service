@@ -1,0 +1,21 @@
+[Unit]
+Description=益阳高新区智慧招商平台 (Gunicorn)
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/yiyang_invest
+Environment="FLASK_ENV=production"
+Environment="SECRET_KEY=change-me-to-a-secure-random-string-64chars"
+Environment="DATABASE_URL=postgresql://yiyang:changeme@localhost:5432/yiyang_invest"
+ExecStart=/opt/yiyang_invest/venv/bin/gunicorn -c deploy/gunicorn_config.py wsgi:app
+Restart=always
+RestartSec=5
+
+# 安全加固
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

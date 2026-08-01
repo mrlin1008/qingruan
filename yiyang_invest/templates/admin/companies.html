@@ -1,0 +1,631 @@
+{% extends "admin_base.html" %}
+{% block title %}客商库 — 管理后台{% endblock %}
+{% block page_title %}客商库{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <a href="?" class="btn btn-sm {{ 'btn-primary' if not current_type else 'btn-outline' }}">全部类型</a>
+    <a href="?type=target" class="btn btn-sm {{ 'btn-primary' if current_type == 'target' else 'btn-outline' }}">目标客商</a>
+    <a href="?type=settled" class="btn btn-sm {{ 'btn-primary' if current_type == 'settled' else 'btn-outline' }}">入驻企业</a>
+    {% for t in tracks %}
+    <a href="?track={{ t }}" class="btn btn-sm {{ 'btn-primary' if current_track == t else 'btn-outline' }}">{{ t }}</a>
+    {% endfor %}
+    <form method="get" action="/admin/companies" class="d-flex gap-1" style="margin-left:auto;">
+        <input type="text" name="search" class="form-control" placeholder="搜索企业名称..." value="{{ search }}" style="width:180px;">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search"></i></button>
+    </form>
+    <button class="btn btn-primary btn-sm" onclick="showModal('addCompanyModal')">
+        <i class="bi bi-plus-lg"></i> 新增企业
+    </button>
+    <button class="btn btn-sm btn-outline" onclick="openTianyanchaModal()" id="tycBtn">
+        <i class="bi bi-search"></i> 天眼查导入
+    </button>
+    <button class="btn btn-sm btn-outline" onclick="batchGeocode()" id="geocodeBatchBtn">
+        <i class="bi bi-geo-alt"></i> 批量填充坐标
+    </button>
+</div>
+
+<!-- 天眼查状态提示 -->
+<div id="tycStatus" class="hidden mb-3"></div>
+
+<!-- 地图 + 表格切换 -->
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-sm btn-primary" id="mapViewBtn" onclick="switchCompanyView('table')">表格视图</button>
+    <button class="btn btn-sm btn-outline" id="tableViewBtn" onclick="switchCompanyView('map')">地图视图</button>
+</div>
+
+<!-- 表格视图 -->
+<div id="companyTableView">
+    <div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>企业名称</th>
+                <th>类型</th>
+                <th>赛道</th>
+                <th>规模</th>
+                <th>所在城市</th>
+                <th>联系人</th>
+                <th>电话</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in companies %}
+            <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td><span class="badge {{ 'badge-success' if c.company_type == 'settled' else 'badge-info' }}">{{ '入驻企业' if c.company_type == 'settled' else '目标客商' }}</span></td>
+                <td>
+                    {% if c.industry_track %}
+                    <span class="badge badge-track-{{ 'sense' if '感知' in c.industry_track else 'vision' if '视觉' in c.industry_track else 'equip' if '装备' in c.industry_track else 'compute' if '算力' in c.industry_track else 'neutral' }}">
+                        {{ c.industry_track }}
+                    </span>
+                    {% else %}-{% endif %}
+                </td>
+                <td>{{ c.scale or '-' }}</td>
+                <td>{{ c.city or '-' }}</td>
+                <td>{{ c.contact_person or '-' }}</td>
+                <td>{{ c.contact_phone or '-' }}</td>
+                <td><span class="badge {{ 'badge-success' if c.status == 'active' else 'badge-neutral' }}">{{ '活跃' if c.status == 'active' else '停用' }}</span></td>
+                <td>
+                    {% if c.lat and c.lng %}
+                    <span class="badge badge-success" title="{{ c.lat }}, {{ c.lng }}">📍 已定位</span>
+                    {% else %}
+                    <button class="btn btn-xs btn-outline text-warning" onclick="geocodeCompany({{ c.id }})" title="获取坐标">📍 定位</button>
+                    {% endif %}
+                    <button class="btn btn-xs btn-outline" onclick="editCompany({{ c.id }})" title="编辑"><i class="bi bi-pencil"></i></button>
+                    {% if c.tianyancha_id %}
+                    <button class="btn btn-xs btn-outline text-success" onclick="enrichCompany({{ c.id }})" title="天眼查同步">🔄</button>
+                    {% else %}
+                    <button class="btn btn-xs btn-outline text-tertiary" onclick="enrichCompany({{ c.id }})" title="天眼查绑定">🔗</button>
+                    {% endif %}
+                    <button class="btn btn-xs btn-outline" onclick="syncBidding({{ c.id }})" title="同步招投标">📋</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" class="text-center text-tertiary" style="padding:32px;">暂无企业数据，请添加目标客商或入驻企业</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <ul class="pagination">
+        {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == pagination.page }}">
+            <a class="page-link" href="?page={{ p }}{{ '&type=' + current_type if current_type }}{{ '&track=' + current_track if current_track }}{{ '&search=' + search if search }}">{{ p }}</a>
+        </li>
+        {% else %}
+        <li class="page-item"><span class="page-link">...</span></li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+<!-- 地图视图 -->
+<div id="companyMapView" class="hidden">
+    <div class="card">
+        <div class="card-header">
+            <span>企业分布地图</span>
+            <div class="d-flex gap-2 align-items-center">
+                <label class="d-flex align-items-center gap-1" style="font-size:12px;font-weight:400;cursor:pointer;">
+                    <input type="checkbox" id="heatmapToggle" onchange="toggleHeatmap()"> 产业密度热力
+                </label>
+                <span id="heatmapLegend" class="hidden" style="font-size:10px;color:var(--text-tertiary);">
+                    <span style="color:#ff3300;">●</span> 高
+                    <span style="color:#ff9900;">●</span>
+                    <span style="color:#66cc00;">●</span> 低
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="companyMap" class="map-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 天眼查企业搜索 Modal -->
+<div class="modal" id="tycSearchModal">
+    <div class="modal-backdrop" onclick="hideModal('tycSearchModal')"></div>
+    <div class="modal-dialog" style="width:680px;">
+        <div class="modal-header">
+            <span><i class="bi bi-search"></i> 天眼查企业搜索</span>
+            <button class="modal-close" onclick="hideModal('tycSearchModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" id="tycKeyword" class="form-control" placeholder="输入企业名称关键词（至少2个字符）..." style="flex:1;" onkeydown="if(event.key==='Enter')tycSearch()">
+                <button class="btn btn-primary" onclick="tycSearch()">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+            <div id="tycLoading" class="text-center text-tertiary hidden" style="padding:40px;">
+                <div class="skeleton" style="height:32px;width:200px;margin:0 auto 12px;"></div>
+                <span>正在查询天眼查...</span>
+            </div>
+            <div id="tycResults" class="hidden">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>企业名称</th>
+                                <th>法人</th>
+                                <th>注册资本</th>
+                                <th>所在地</th>
+                                <th>行业</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tycResultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="tycEmpty" class="text-center text-tertiary hidden" style="padding:32px;">
+                <i class="bi bi-inbox" style="font-size:32px;"></i>
+                <p class="mt-2">未找到匹配的企业，请尝试其他关键词</p>
+            </div>
+            <div id="tycImportMsg" class="hidden mt-2"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/编辑企业 Modal -->
+<div class="modal" id="addCompanyModal">
+    <div class="modal-backdrop" onclick="hideModal('addCompanyModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span id="companyModalTitle">新增企业</span>
+            <button class="modal-close" onclick="hideModal('addCompanyModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="companyId">
+            <div class="form-group">
+                <label>企业名称</label>
+                <input type="text" id="companyName" class="form-control" placeholder="企业全称">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>类型</label>
+                    <select id="companyType" class="form-control">
+                        <option value="target">目标客商</option>
+                        <option value="settled">入驻企业</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>赛道</label>
+                    <select id="companyTrack" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="智能感知">智能感知</option>
+                        <option value="工业视觉">工业视觉</option>
+                        <option value="装备智能">装备智能</option>
+                        <option value="算力配套">算力配套</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>规模</label>
+                    <select id="companyScale" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="大型">大型</option>
+                        <option value="中型">中型</option>
+                        <option value="小型">小型</option>
+                        <option value="初创">初创</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>所在城市</label>
+                    <input type="text" id="companyCity" class="form-control" placeholder="城市">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>详细地址</label>
+                <input type="text" id="companyAddress" class="form-control" placeholder="详细地址">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>联系人</label>
+                    <input type="text" id="companyContact" class="form-control" placeholder="联系人">
+                </div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" id="companyPhone" class="form-control" placeholder="手机号码">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>网址</label>
+                <input type="url" id="companyWebsite" class="form-control" placeholder="https://">
+            </div>
+            <div class="form-group">
+                <label>企业简介</label>
+                <textarea id="companyDesc" class="form-control" rows="2" placeholder="简要描述企业主营业务和特点"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('addCompanyModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveCompany()">保存</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var mapInitialized = false;
+var companyLayer;
+var tycConfigured = null;
+
+// --- 天眼查状态检查 ---
+function checkTycStatus() {
+    fetch('/api/tianyancha/status')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            tycConfigured = d.configured;
+            if (!d.configured) {
+                var el = document.getElementById('tycStatus');
+                el.className = 'flash-msg flash-warning';
+                el.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 天眼查 CLI 未配置，搜索导入功能不可用。请安装 <code>tyc</code> 命令行工具并登录。';
+                el.classList.remove('hidden');
+                document.getElementById('tycBtn').disabled = true;
+            }
+        })
+        .catch(function() { tycConfigured = false; });
+}
+checkTycStatus();
+
+// --- 天眼查搜索弹窗 ---
+function openTianyanchaModal() {
+    if (tycConfigured === false) {
+        alert('天眼查 CLI 未配置，无法使用搜索功能。');
+        return;
+    }
+    document.getElementById('tycKeyword').value = '';
+    document.getElementById('tycResults').classList.add('hidden');
+    document.getElementById('tycEmpty').classList.add('hidden');
+    document.getElementById('tycLoading').classList.add('hidden');
+    document.getElementById('tycImportMsg').classList.add('hidden');
+    showModal('tycSearchModal');
+    setTimeout(function() { document.getElementById('tycKeyword').focus(); }, 200);
+}
+
+function tycSearch() {
+    var keyword = document.getElementById('tycKeyword').value.trim();
+    if (keyword.length < 2) {
+        alert('请输入至少2个字符的关键词');
+        return;
+    }
+
+    document.getElementById('tycResults').classList.add('hidden');
+    document.getElementById('tycEmpty').classList.add('hidden');
+    document.getElementById('tycLoading').classList.remove('hidden');
+    document.getElementById('tycImportMsg').classList.add('hidden');
+
+    fetch('/api/tianyancha/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({keyword: keyword})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        document.getElementById('tycLoading').classList.add('hidden');
+        if (!d.ok) {
+            alert(d.msg || '搜索失败');
+            return;
+        }
+        var results = d.results || [];
+        if (results.length === 0) {
+            document.getElementById('tycEmpty').classList.remove('hidden');
+            return;
+        }
+        var tbody = document.getElementById('tycResultsBody');
+        tbody.innerHTML = results.map(function(item, idx) {
+            return '<tr>' +
+                '<td><strong>' + escapeHtml(item.name) + '</strong></td>' +
+                '<td>' + (item.legal_person || '-') + '</td>' +
+                '<td>' + (item.reg_capital || '-') + '</td>' +
+                '<td>' + (item.city || '-') + '</td>' +
+                '<td>' + (item.industry || '-') + '</td>' +
+                '<td>' +
+                    '<button class="btn btn-xs btn-primary" onclick="tycImport(' + idx + ')" title="导入到客商库">' +
+                        '<i class="bi bi-plus-lg"></i> 导入' +
+                    '</button>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+        // 缓存搜索结果
+        tbody._results = results;
+        document.getElementById('tycResults').classList.remove('hidden');
+    })
+    .catch(function(e) {
+        document.getElementById('tycLoading').classList.add('hidden');
+        alert('网络错误: ' + e.message);
+    });
+}
+
+function tycImport(idx) {
+    var results = document.getElementById('tycResultsBody')._results || [];
+    var item = results[idx];
+    if (!item) return;
+
+    var msgEl = document.getElementById('tycImportMsg');
+    msgEl.className = 'flash-msg flash-warning';
+    msgEl.innerHTML = '正在导入 <strong>' + escapeHtml(item.name) + '</strong> ...';
+    msgEl.classList.remove('hidden');
+
+    fetch('/api/tianyancha/import', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: item.name,
+            tianyancha_id: item.tianyancha_id,
+            company_type: 'target'
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) {
+            if (d.existed) {
+                msgEl.className = 'flash-msg flash-warning';
+                msgEl.innerHTML = '⚠️ <strong>' + escapeHtml(item.name) + '</strong> 已存在于客商库中，已更新天眼查ID。';
+            } else {
+                msgEl.className = 'flash-msg flash-success';
+                msgEl.innerHTML = '✅ <strong>' + escapeHtml(item.name) + '</strong> 已成功导入客商库！';
+            }
+            // 刷新页面以显示新数据
+            setTimeout(function() { location.reload(); }, 1500);
+        } else {
+            msgEl.className = 'flash-msg flash-error';
+            msgEl.innerHTML = '导入失败: ' + (d.msg || '未知错误');
+        }
+    })
+    .catch(function(e) {
+        msgEl.className = 'flash-msg flash-error';
+        msgEl.innerHTML = '网络错误: ' + e.message;
+    });
+}
+
+// --- 企业信息同步 ---
+function enrichCompany(id) {
+    if (!confirm('将从天眼查同步该企业的详细信息（不覆盖已有数据），确认继续？')) return;
+
+    fetch('/api/companies/' + id + '/enrich', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) {
+            alert('企业信息同步成功！');
+            location.reload();
+        } else {
+            alert('同步失败: ' + (d.msg || '未知错误'));
+        }
+    })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+
+// --- 招投标同步 ---
+function syncBidding(id) {
+    if (!confirm('将从天眼查同步该企业最新的招投标记录，确认继续？')) return;
+
+    fetch('/api/companies/' + id + '/sync-bidding', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) {
+            alert(d.msg || '招投标同步完成！');
+            if (d.new_count > 0) location.reload();
+        } else {
+            alert('同步失败: ' + (d.msg || '未知错误'));
+        }
+    })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// --- 坐标填充 ---
+function batchGeocode() {
+    if (!confirm('将通过天眼查为所有缺失坐标的企业批量填充经纬度，确认继续？')) return;
+    var btn = document.getElementById('geocodeBatchBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 填充中...';
+
+    fetch('/api/companies/geocode-all', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) {
+            alert('坐标填充完成！\n总计: ' + d.total + ' 家企业\n成功: ' + d.filled + '\n失败: ' + d.failed);
+        } else {
+            alert('填充失败: ' + (d.msg || '未知错误'));
+        }
+        location.reload();
+    })
+    .catch(function(e) {
+        alert('网络错误: ' + e.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-geo-alt"></i> 批量填充坐标';
+    });
+}
+
+function geocodeCompany(id) {
+    fetch('/api/companies/' + id + '/geocode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) {
+            alert('坐标已更新: (' + d.lat.toFixed(6) + ', ' + d.lng.toFixed(6) + ')');
+            location.reload();
+        } else {
+            alert('坐标获取失败: ' + (d.msg || '未知错误'));
+        }
+    })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+
+// --- 热力图 ---
+function toggleHeatmap() {
+    var checked = document.getElementById('heatmapToggle').checked;
+    var legend = document.getElementById('heatmapLegend');
+
+    if (checked) {
+        legend.classList.remove('hidden');
+        if (window._heatmapLayer) {
+            window._companyMap.addLayer(window._heatmapLayer);
+            return;
+        }
+        if (!window._heatmapData || window._heatmapData.length === 0) {
+            alert('暂无坐标数据，请先为企业填充经纬度。');
+            document.getElementById('heatmapToggle').checked = false;
+            legend.classList.add('hidden');
+            return;
+        }
+        // 转为 leaflet-heat 格式: [lat, lng, intensity]
+        var heatPoints = window._heatmapData.map(function(p) {
+            return [p.lat, p.lng, p.intensity];
+        });
+
+        window._heatmapLayer = L.heatLayer(heatPoints, {
+            radius: 35,
+            blur: 25,
+            maxZoom: 14,
+            max: 1.0,
+            gradient: {
+                0.1: '#2ecc71',   // 绿 — 低密度
+                0.3: '#66cc00',
+                0.5: '#ffcc00',   // 黄 — 中密度
+                0.7: '#ff9900',
+                0.9: '#ff3300'    // 红 — 高密度
+            }
+        }).addTo(window._companyMap);
+
+        // 尝试定位到长株潭中心
+        window._companyMap.setView([27.95, 112.95], 9);
+    } else {
+        legend.classList.add('hidden');
+        if (window._heatmapLayer) {
+            window._companyMap.removeLayer(window._heatmapLayer);
+        }
+    }
+}
+
+function switchCompanyView(view) {
+    document.getElementById('companyTableView').classList.toggle('hidden', view === 'map');
+    document.getElementById('companyMapView').classList.toggle('hidden', view === 'table');
+    document.getElementById('mapViewBtn').className = view === 'map' ? 'btn btn-sm btn-outline' : 'btn btn-sm btn-primary';
+    document.getElementById('tableViewBtn').className = view === 'table' ? 'btn btn-sm btn-outline' : 'btn btn-sm btn-primary';
+
+    if (view === 'map' && !mapInitialized) {
+        initMap();
+    }
+}
+
+function initMap() {
+    mapInitialized = true;
+    window._companyMap = L.map('companyMap', {
+        center: [27.9, 112.9], zoom: 9
+    });
+
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+        subdomains: '1234', maxZoom: 18,
+        attribution: '高德地图'
+    }).addTo(window._companyMap);
+
+    // 加载企业标记
+    fetch('/api/stats/map')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var trackColors = {'智能感知':'#3b82f6','工业视觉':'#0ca678','装备智能':'#f08c00','算力配套':'#8b5cf6'};
+            data.companies.forEach(function(c) {
+                var color = trackColors[c.track] || '#1e5bff';
+                L.circleMarker([c.lat, c.lng], {
+                    radius: 8, fillColor: color, color: '#fff',
+                    weight: 2, fillOpacity: 0.8
+                })
+                .bindPopup('<b>' + c.name + '</b><br>' + (c.track || '') + ' · ' + c.city)
+                .addTo(window._companyMap);
+            });
+        });
+
+    // 预加载热力图数据
+    fetch('/api/stats/heatmap')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            window._heatmapData = data.points;
+        });
+}
+
+function saveCompany() {
+    var id = document.getElementById('companyId').value;
+    var data = {
+        name: document.getElementById('companyName').value,
+        company_type: document.getElementById('companyType').value,
+        industry_track: document.getElementById('companyTrack').value,
+        scale: document.getElementById('companyScale').value,
+        city: document.getElementById('companyCity').value,
+        address: document.getElementById('companyAddress').value,
+        contact_person: document.getElementById('companyContact').value,
+        contact_phone: document.getElementById('companyPhone').value,
+        website: document.getElementById('companyWebsite').value,
+        description: document.getElementById('companyDesc').value
+    };
+    var url = id ? '/api/companies/' + id : '/api/companies';
+    fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '操作失败'); })
+    .catch(function(e) { alert('网络错误'); });
+}
+
+function editCompany(id) {
+    document.getElementById('companyId').value = id;
+    document.getElementById('companyModalTitle').textContent = '编辑企业';
+    showModal('addCompanyModal');
+}
+
+// 新增企业时重置
+document.querySelector('[onclick="showModal(\'addCompanyModal\')"]').addEventListener('click', function() {
+    document.getElementById('companyId').value = '';
+    document.getElementById('companyModalTitle').textContent = '新增企业';
+    document.getElementById('companyName').value = '';
+    document.getElementById('companyType').value = 'target';
+    document.getElementById('companyTrack').value = '';
+    document.getElementById('companyScale').value = '';
+    document.getElementById('companyCity').value = '';
+    document.getElementById('companyAddress').value = '';
+    document.getElementById('companyContact').value = '';
+    document.getElementById('companyPhone').value = '';
+    document.getElementById('companyWebsite').value = '';
+    document.getElementById('companyDesc').value = '';
+});
+</script>
+{% endblock %}

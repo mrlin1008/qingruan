@@ -1,0 +1,132 @@
+{% extends "admin_base.html" %}
+{% block title %}园区实景 — 管理后台{% endblock %}
+{% block page_title %}园区实景图管理{% endblock %}
+
+{% block content %}
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('parkFileInput').click()">
+        <i class="bi bi-plus-lg"></i> 上传实景图
+    </button>
+    <input type="file" id="parkFileInput" accept="image/*" multiple style="display:none;" onchange="handleParkFiles(this.files)">
+    <span style="font-size:12px;color:var(--text-tertiary);align-self:center;">
+        支持 JPG/PNG/GIF/WebP，≤10MB，可多选
+    </span>
+</div>
+
+<!-- 上传进度 -->
+<div id="uploadProgress" class="hidden mb-3">
+    <div class="card"><div class="card-body" style="padding:12px 20px;">
+        <span id="uploadProgressText" style="font-size:13px;color:var(--text-secondary);">正在上传...</span>
+        <div class="skeleton mt-2" style="height:4px;width:100%;border-radius:2px;"></div>
+    </div></div>
+</div>
+
+<!-- 实景图网格 -->
+<div id="parkImagesGrid" class="grid-3" style="gap:16px;">
+    <div class="text-center text-tertiary" style="grid-column:1/-1;padding:40px;">加载中...</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var CATEGORIES = ['园区风光', '孵化空间', '制造厂房', '配套设施'];
+
+function loadParkImages() {
+    fetch('/api/park-images')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) return;
+            var grid = document.getElementById('parkImagesGrid');
+            if (d.images.length === 0) {
+                grid.innerHTML = '<div class="text-center text-tertiary" style="grid-column:1/-1;padding:60px;"><i class="bi bi-image" style="font-size:36px;display:block;margin-bottom:12px;"></i>暂无实景图，点击上方按钮上传</div>';
+                return;
+            }
+            grid.innerHTML = d.images.map(function(img) {
+                var sizeMb = (img.file_size / 1024 / 1024).toFixed(1);
+                return '<div class="card" style="overflow:hidden;">' +
+                    '<div style="height:180px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+                        '<img src="' + img.url + '" alt="' + escapeHtml(img.original_name) + '" style="width:100%;height:100%;object-fit:cover;">' +
+                    '</div>' +
+                    '<div style="padding:10px 12px;">' +
+                        '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(img.original_name) + '">' + escapeHtml(img.original_name) + '</div>' +
+                        '<div class="d-flex justify-content-between align-items-center">' +
+                            '<select class="form-control" style="font-size:11px;padding:2px 6px;width:auto;" onchange="updateCategory(' + img.id + ', this.value)">' +
+                                CATEGORIES.map(function(c) {
+                                    return '<option value="' + c + '"' + (img.category === c ? ' selected' : '') + '>' + c + '</option>';
+                                }).join('') +
+                            '</select>' +
+                            '<button class="btn btn-xs btn-outline text-error" onclick="deleteImage(' + img.id + ')" title="删除">&times;</button>' +
+                        '</div>' +
+                        '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">' + sizeMb + 'MB · ' + img.created_at + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        });
+}
+
+function handleParkFiles(files) {
+    if (!files.length) return;
+    var total = files.length;
+    var done = 0;
+    var progressEl = document.getElementById('uploadProgress');
+    var progressText = document.getElementById('uploadProgressText');
+
+    progressEl.classList.remove('hidden');
+
+    function uploadNext(i) {
+        if (i >= files.length) {
+            progressEl.classList.add('hidden');
+            loadParkImages();
+            return;
+        }
+        var file = files[i];
+        if (!file.type.match(/image\//)) { uploadNext(i + 1); return; }
+
+        progressText.textContent = '正在上传 (' + (done + 1) + '/' + total + '): ' + file.name;
+
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('category', '园区风光');
+
+        fetch('/api/upload/park-image', { method: 'POST', body: formData })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                done++;
+                if (!d.ok) console.error('上传失败: ' + file.name);
+                uploadNext(i + 1);
+            })
+            .catch(function(e) {
+                done++;
+                console.error('上传失败: ' + file.name, e);
+                uploadNext(i + 1);
+            });
+    }
+    uploadNext(0);
+    document.getElementById('parkFileInput').value = '';
+}
+
+function updateCategory(id, category) {
+    fetch('/api/park-images/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({category: category})
+    });
+}
+
+function deleteImage(id) {
+    if (!confirm('确认删除这张实景图？')) return;
+    fetch('/api/park-images/' + id, { method: 'DELETE' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.ok) loadParkImages(); });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+loadParkImages();
+</script>
+{% endblock %}

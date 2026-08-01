@@ -1,0 +1,166 @@
+{% extends "public_base.html" %}
+{% block title %}益阳高新区 · 智慧招商 — 首页{% endblock %}
+{% block meta_desc %}益阳高新区智慧招商平台，长株潭协同型光电+工业人工智能特色产业集聚区，聚焦智能感知、工业视觉、装备智能、算力配套四大细分赛道。{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="/static/js/map.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="portal-hero">
+    <h1>益阳高新区 · 智慧招商</h1>
+    <p>长株潭协同型"光电+工业人工智能"特色产业集聚区<br>聚焦智能感知 · 工业视觉 · 装备智能 · 算力配套四大细分赛道</p>
+    <div>
+        <a href="/industry" class="btn btn-primary" style="color:#fff;padding:10px 24px;font-size:14px;">探索产业生态</a>
+        <a href="/contact" class="btn btn-outline" style="border-color:rgba(255,255,255,0.3);color:#fff;margin-left:12px;padding:10px 24px;font-size:14px;">在线对接</a>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat"><div class="num">195</div><div class="lbl">规上工业企业</div></div>
+        <div class="hero-stat"><div class="num">30+</div><div class="lbl">AI相关企业</div></div>
+        <div class="hero-stat"><div class="num">14.5<span style="font-size:16px;">万㎡</span></div><div class="lbl">研发孵化空间</div></div>
+        <div class="hero-stat"><div class="num">10<span style="font-size:16px;">栋</span></div><div class="lbl">标准厂房</div></div>
+    </div>
+</section>
+
+<!-- 长株潭产业密度热力图 -->
+<section class="portal-section">
+    <h2>长株潭产业密度热力</h2>
+    <p class="section-desc">基于天眼查企业坐标数据，可视化展示长株潭区域智能感知、工业视觉、装备智能、算力配套四大赛道企业的空间集聚态势</p>
+    <div class="card" style="overflow:hidden;">
+        <div class="card-header">
+            <span>企业分布热力图</span>
+            <span style="font-size:11px;color:var(--text-tertiary);font-weight:400;">
+                <span style="color:#ff3300;">●</span> 高密度
+                <span style="color:#ff9900;">●</span>
+                <span style="color:#66cc00;">●</span>
+                <span style="color:#2ecc71;">●</span> 低密度
+            </span>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div id="publicHeatmap" style="width:100%;height:480px;"></div>
+        </div>
+    </div>
+</section>
+
+<!-- 四大赛道 -->
+<section class="portal-section">
+    <h2>四大核心赛道</h2>
+    <p class="section-desc">立足益阳高新区"两主一特"制造底色，聚焦四大AI细分赛道，构建算力底座+创新平台+产业制造+全域场景发展模式</p>
+    <div class="track-cards">
+        <div class="track-card">
+            <div class="track-icon" style="color:var(--track-sense);"><i class="bi bi-cpu"></i></div>
+            <h3>智能感知</h3>
+            <p>光电传感器、激光雷达模组、量子检测设备研发制造，依托湖南未来光电技术研究院、麓宇光电</p>
+        </div>
+        <div class="track-card">
+            <div class="track-icon" style="color:var(--track-vision);"><i class="bi bi-eye"></i></div>
+            <h3>工业视觉</h3>
+            <p>AI视觉检测算法、视觉检测装备，面向电容、新材料、装备行业推广AI质检与智能检测</p>
+        </div>
+        <div class="track-card">
+            <div class="track-icon" style="color:var(--track-equip);"><i class="bi bi-gear"></i></div>
+            <h3>装备智能</h3>
+            <p>智能控制器、工业软件、智能装备集成，三一、益阳橡机、信维电科等龙头企业智能化升级</p>
+        </div>
+        <div class="track-card">
+            <div class="track-icon" style="color:var(--track-compute);"><i class="bi bi-cloud-arrow-up"></i></div>
+            <h3>算力配套</h3>
+            <p>智算中心、数据中心、储能系统，依托益阳智算中心、全省第二家虚拟电厂</p>
+        </div>
+    </div>
+</section>
+
+<!-- 核心优势 -->
+<section class="portal-section" style="background:var(--surface);max-width:100%;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <h2>为什么选择益阳高新区</h2>
+        <p class="section-desc">产业根基扎实、空间载体完备、科创协同通畅、软硬件配套完善</p>
+        <div class="grid-3" style="margin-top:40px;">
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-building" style="font-size:32px;color:var(--accent);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">产业根基扎实</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">195家规上工业、近30家AI企业<br>26个项目纳入省级数字化转型<br>12家企业两化融合贯标试点</p>
+            </div>
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-grid-3x3-gap" style="font-size:32px;color:var(--success);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">空间载体完备</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">孵化区14.5万㎡研发办公楼宇<br>制造区10栋标准厂房配套<br>初创→中试→量产无缝衔接</p>
+            </div>
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-mortarboard" style="font-size:32px;color:var(--track-equip);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">科创协同通畅</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">湖南未来光电技术研究院<br>中南大学成果转化基地<br>长沙高新区科创飞地</p>
+            </div>
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-lightning-charge" style="font-size:32px;color:var(--track-compute);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">算力基建完善</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">益阳智算中心投入运营<br>全域5G基站全覆盖<br>全省第二家虚拟电厂</p>
+            </div>
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-pin-map" style="font-size:32px;color:var(--accent);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">长株潭区位优势</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">距长沙70公里，1小时经济圈<br>高铁益阳南站直达<br>长沙研发 + 益阳中试制造</p>
+            </div>
+            <div class="card" style="padding:28px 24px;text-align:center;">
+                <i class="bi bi-currency-dollar" style="font-size:32px;color:var(--success);margin-bottom:16px;display:block;"></i>
+                <h3 style="font-size:15px;margin-bottom:8px;">政策精准扶持</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">AI专项产业政策（制定中）<br>前两年租金50%-100%补贴<br>人才安家+科研+租房补贴</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 新闻动态 -->
+{% if articles %}
+<section class="portal-section">
+    <h2>新闻动态</h2>
+    <p class="section-desc">园区最新招商成果、产业资讯和政策解读</p>
+    <div class="grid-2" style="margin-top:32px;">
+        {% for article in articles %}
+        <div class="policy-card">
+            <span class="badge badge-neutral">{{ article.category }}</span>
+            <h4 style="margin-top:8px;">{{ article.title }}</h4>
+            <p class="meta">{{ article.publish_date }}</p>
+            <p class="summary">{{ article.summary }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- 行动号召 -->
+<section class="portal-hero" style="padding:60px 24px;">
+    <h2 style="font-size:28px;margin-bottom:12px;">携手共建AI产业新高地</h2>
+    <p style="margin-bottom:28px;">无论您是传感器研发企业、工业软件公司还是AI系统集成商<br>益阳高新区提供从孵化到量产的全周期空间载体和专业服务</p>
+    <a href="/contact" class="btn btn-primary" style="color:#fff;padding:12px 32px;font-size:15px;">
+        <i class="bi bi-chat-dots"></i> 立即对接招商团队
+    </a>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var map = initInvestmentMap('publicHeatmap', {
+        center: [27.95, 112.9], zoom: 9
+    });
+
+    fetch('/api/public/heatmap')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.points && data.points.length > 0) {
+                addHeatmapLayer(map, data.points);
+                // 同时添加企业标记
+                markCompanies(map, data.points.map(function(p) {
+                    return {name: p.name, lat: p.lat, lng: p.lng, track: p.track, type: 'target'};
+                }));
+            }
+        })
+        .catch(function(e) { console.error('热力图加载失败:', e); });
+})();
+</script>
+{% endblock %}

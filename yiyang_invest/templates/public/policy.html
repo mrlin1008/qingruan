@@ -1,0 +1,53 @@
+{% extends "public_base.html" %}
+{% block title %}政策服务 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">政策服务</h1>
+    <p>从场地、研发、人才、金融到上市，全方位政策支持体系</p>
+</section>
+
+<section class="portal-section">
+    <!-- 政策类型筛选 -->
+    <div class="nav-tabs">
+        <a href="/policy" class="nav-link {{ 'active' if not current_type }}">全部政策</a>
+        {% for t in types %}
+        <a href="/policy?type={{ t }}" class="nav-link {{ 'active' if current_type == t }}">{{ t }}</a>
+        {% endfor %}
+    </div>
+
+    <!-- 政策列表 -->
+    {% if policies %}
+    <div style="margin-top:20px;">
+        {% for p in policies %}
+        <div class="policy-card">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge badge-primary">{{ p.policy_type }}</span>
+                <span class="small text-tertiary">{{ p.issuing_dept }}</span>
+            </div>
+            <h4>{{ p.title }}</h4>
+            <p class="meta">发布日期：{{ p.publish_date }}</p>
+            <p class="summary">{{ p.summary }}</p>
+            {% if p.applicable_conditions %}
+            <p class="small text-tertiary mt-2"><i class="bi bi-info-circle"></i> 适用条件：{{ p.applicable_conditions }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:48px;color:var(--text-tertiary);">
+        <i class="bi bi-file-text" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+        暂无该类型的政策信息
+    </div>
+    {% endif %}
+
+    <!-- 政策咨询引导 -->
+    <div style="margin-top:40px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;">
+        <h3 style="font-size:18px;margin-bottom:8px;">不确定哪些政策适合您的项目？</h3>
+        <p style="color:var(--text-secondary);margin-bottom:20px;">招商团队将根据您的企业类型和项目阶段，提供一对一政策匹配服务</p>
+        <a href="/contact" class="btn btn-primary" style="color:#fff;">
+            <i class="bi bi-chat-dots"></i> 联系招商团队获取政策咨询
+        </a>
+    </div>
+</section>
+{% endblock %}

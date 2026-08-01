@@ -1,0 +1,306 @@
+{% extends "admin_base.html" %}
+{% block title %}线索池 — 管理后台{% endblock %}
+{% block page_title %}线索池{% endblock %}
+
+{% block content %}
+<!-- 筛选栏 -->
+<div class="filter-bar">
+    <a href="/admin/leads" class="btn btn-sm {{ 'btn-primary' if not current_status else 'btn-outline' }}">全部</a>
+    <a href="?status=待处理" class="btn btn-sm {{ 'btn-primary' if current_status == '待处理' else 'btn-outline' }}">待处理</a>
+    <a href="?status=对接中" class="btn btn-sm {{ 'btn-primary' if current_status == '对接中' else 'btn-outline' }}">对接中</a>
+    <a href="?status=已转化" class="btn btn-sm {{ 'btn-primary' if current_status == '已转化' else 'btn-outline' }}">已转化</a>
+    <a href="?status=已关闭" class="btn btn-sm {{ 'btn-primary' if current_status == '已关闭' else 'btn-outline' }}">已关闭</a>
+    <span style="flex:1;"></span>
+    <button class="btn btn-primary btn-sm" onclick="showModal('addLeadModal')">
+        <i class="bi bi-plus-lg"></i> 新增线索
+    </button>
+</div>
+
+<!-- 线索表格 -->
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>企业名称</th>
+            <th>联系人</th>
+            <th>电话</th>
+            <th>意向赛道</th>
+            <th>来源</th>
+            <th>意向程度</th>
+            <th>状态</th>
+            <th>负责人</th>
+            <th>日期</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lead in leads %}
+        <tr>
+            <td><strong>{{ lead.company_name }}</strong></td>
+            <td>{{ lead.contact_person or '-' }}</td>
+            <td>{{ lead.contact_phone or '-' }}</td>
+            <td>
+                {% if lead.industry_track %}
+                <span class="badge badge-track-{{ 'sense' if '感知' in lead.industry_track else 'vision' if '视觉' in lead.industry_track else 'equip' if '装备' in lead.industry_track else 'compute' if '算力' in lead.industry_track else 'neutral' }}">
+                    {{ lead.industry_track }}
+                </span>
+                {% else %}-{% endif %}
+            </td>
+            <td>{{ lead.source }}</td>
+            <td>{{ lead.intent_level }}</td>
+            <td>
+                <span class="badge {{ 'badge-warning' if lead.status == '待处理' else 'badge-info' if lead.status == '对接中' else 'badge-success' if lead.status == '已转化' else 'badge-neutral' }}">
+                    {{ lead.status }}
+                </span>
+            </td>
+            <td>{{ lead.assignee.display_name if lead.assignee else '-' }}</td>
+            <td class="nowrap">{{ lead.created_at.strftime('%Y-%m-%d') if lead.created_at else '-' }}</td>
+            <td class="nowrap">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-xs btn-outline" onclick="editLead({{ lead.id }})" title="编辑">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    {% if lead.status not in ('已转化', '已关闭') %}
+                    <button class="btn btn-xs btn-outline" onclick="showConvertModal({{ lead.id }}, '{{ lead.company_name }}')" title="转化为项目">
+                        <i class="bi bi-arrow-right-circle"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="10" class="text-center text-tertiary" style="padding:32px;">暂无线索数据</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- 分页 -->
+{% if pagination.pages > 1 %}
+<ul class="pagination">
+    {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+    {% if p %}
+    <li class="page-item {{ 'active' if p == pagination.page }}">
+        <a class="page-link" href="?page={{ p }}{{ '&status=' + current_status if current_status }}">{{ p }}</a>
+    </li>
+    {% else %}
+    <li class="page-item"><span class="page-link">...</span></li>
+    {% endif %}
+    {% endfor %}
+</ul>
+{% endif %}
+
+<!-- 新增/编辑线索 Modal -->
+<div class="modal" id="addLeadModal">
+    <div class="modal-backdrop" onclick="hideModal('addLeadModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span id="leadModalTitle">新增线索</span>
+            <button class="modal-close" onclick="hideModal('addLeadModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="leadId">
+            <div class="form-group">
+                <label>企业名称</label>
+                <input type="text" id="leadCompany" class="form-control" placeholder="请输入企业名称">
+            </div>
+            <div class="form-group">
+                <label>联系人</label>
+                <input type="text" id="leadPerson" class="form-control" placeholder="联系人姓名">
+            </div>
+            <div class="form-group">
+                <label>联系电话</label>
+                <input type="tel" id="leadPhone" class="form-control" placeholder="手机号码">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>意向赛道</label>
+                    <select id="leadTrack" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="智能感知">智能感知</option>
+                        <option value="工业视觉">工业视觉</option>
+                        <option value="装备智能">装备智能</option>
+                        <option value="算力配套">算力配套</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>意向程度</label>
+                    <select id="leadIntent" class="form-control">
+                        <option value="高">高</option>
+                        <option value="中" selected>中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>来源</label>
+                    <select id="leadSource" class="form-control">
+                        <option value="展会">展会</option>
+                        <option value="推介会">推介会</option>
+                        <option value="以商招商">以商招商</option>
+                        <option value="网络线索">网络线索</option>
+                        <option value="在线表单">在线表单</option>
+                        <option value="手动录入" selected>手动录入</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>负责人</label>
+                    <select id="leadAssigned" class="form-control">
+                        <option value="">未分配</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <textarea id="leadNotes" class="form-control" rows="2" placeholder="备注信息"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('addLeadModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveLead()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 转化项目 Modal -->
+<div class="modal" id="convertModal">
+    <div class="modal-backdrop" onclick="hideModal('convertModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span>转化为招商项目</span>
+            <button class="modal-close" onclick="hideModal('convertModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="convertLeadId">
+            <p class="small text-secondary mb-3">将线索 "<strong id="convertCompanyName"></strong>" 转化为正式招商项目</p>
+            <div class="form-group">
+                <label>项目名称</label>
+                <input type="text" id="convertTitle" class="form-control" placeholder="项目名称">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>预计投资额（万元）</label>
+                    <input type="number" id="convertAmount" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>项目负责人</label>
+                    <select id="convertOwner" class="form-control">
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {{ 'selected' if u.id == current_user.id }}>{{ u.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('convertModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="convertLead()">确认转化</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var allLeads = {{ leads_json | tojson | safe }};
+
+function editLead(id) {
+    fetch('/admin/leads?format=json').then(function(){});
+    // 从已有数据中找到线索
+    var leadEl = document.querySelectorAll('tr');
+    // 直接通过 fetch API 获取
+    var lead = allLeads.find(function(l) { return l.id == id; });
+    if (!lead) { alert('未找到线索数据'); return; }
+
+    document.getElementById('leadId').value = lead.id;
+    document.getElementById('leadModalTitle').textContent = '编辑线索';
+    document.getElementById('leadCompany').value = lead.company_name || '';
+    document.getElementById('leadPerson').value = lead.contact_person || '';
+    document.getElementById('leadPhone').value = lead.contact_phone || '';
+    document.getElementById('leadTrack').value = lead.industry_track || '';
+    document.getElementById('leadIntent').value = lead.intent_level || '中';
+    document.getElementById('leadSource').value = lead.source || '';
+    document.getElementById('leadAssigned').value = lead.assigned_to || '';
+    document.getElementById('leadNotes').value = lead.notes || '';
+    showModal('addLeadModal');
+}
+
+function saveLead() {
+    var id = document.getElementById('leadId').value;
+    var data = {
+        company_name: document.getElementById('leadCompany').value,
+        contact_person: document.getElementById('leadPerson').value,
+        contact_phone: document.getElementById('leadPhone').value,
+        industry_track: document.getElementById('leadTrack').value,
+        intent_level: document.getElementById('leadIntent').value,
+        source: document.getElementById('leadSource').value,
+        assigned_to: document.getElementById('leadAssigned').value || null,
+        notes: document.getElementById('leadNotes').value
+    };
+
+    var url = id ? '/api/leads/' + id : '/api/leads';
+    var method = id ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) { location.reload(); }
+        else { alert(d.msg || '操作失败'); }
+    })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+
+function showConvertModal(id, name) {
+    document.getElementById('convertLeadId').value = id;
+    document.getElementById('convertCompanyName').textContent = name;
+    document.getElementById('convertTitle').value = name + '招商项目';
+    showModal('convertModal');
+}
+
+function convertLead() {
+    var id = document.getElementById('convertLeadId').value;
+    var data = {
+        title: document.getElementById('convertTitle').value,
+        amount: parseFloat(document.getElementById('convertAmount').value) || 0,
+        owner_id: parseInt(document.getElementById('convertOwner').value) || null
+    };
+
+    fetch('/api/leads/' + id + '/convert', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.ok) { location.reload(); }
+        else { alert(d.msg || '转化失败'); }
+    })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+
+// 新增线索时重置表单
+document.querySelector('[onclick="showModal(\'addLeadModal\')"]').addEventListener('click', function() {
+    document.getElementById('leadId').value = '';
+    document.getElementById('leadModalTitle').textContent = '新增线索';
+    document.getElementById('leadCompany').value = '';
+    document.getElementById('leadPerson').value = '';
+    document.getElementById('leadPhone').value = '';
+    document.getElementById('leadTrack').value = '';
+    document.getElementById('leadIntent').value = '中';
+    document.getElementById('leadSource').value = '手动录入';
+    document.getElementById('leadAssigned').value = '';
+    document.getElementById('leadNotes').value = '';
+});
+</script>
+{% endblock %}

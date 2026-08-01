@@ -1,0 +1,332 @@
+{% extends "admin_base.html" %}
+{% block title %}项目管理 — 管理后台{% endblock %}
+{% block page_title %}项目管理{% endblock %}
+
+{% block content %}
+<!-- 视图切换 -->
+<div class="filter-bar">
+    <a href="?{{ 'stage=' + current_stage if current_stage }}" class="btn btn-sm btn-primary" id="kanbanViewBtn" onclick="switchView('kanban')">
+        <i class="bi bi-kanban"></i> 看板视图
+    </a>
+    <a href="#" class="btn btn-sm btn-outline" id="listViewBtn" onclick="switchView('list')">
+        <i class="bi bi-list-ul"></i> 列表视图
+    </a>
+    <span style="flex:1;"></span>
+    <button class="btn btn-primary btn-sm" onclick="showModal('addProjectModal')">
+        <i class="bi bi-plus-lg"></i> 新增项目
+    </button>
+</div>
+
+<!-- 看板视图 -->
+<div id="kanbanView" class="mb-4">
+    <div class="kanban-board">
+        {% for s in stages %}
+        <div class="kanban-col">
+            <div class="kanban-col-header">
+                <span>
+                    {% if s == '线索' %}<i class="bi bi-lightbulb text-tertiary"></i>
+                    {% elif s == '洽谈' %}<i class="bi bi-chat-dots text-warning"></i>
+                    {% elif s == '签约' %}<i class="bi bi-pen text-accent"></i>
+                    {% elif s == '落地' %}<i class="bi bi-check-circle text-success"></i>
+                    {% elif s == '投产' %}<i class="bi bi-building text-success"></i>
+                    {% endif %}
+                    {{ s }}
+                </span>
+                <span class="badge badge-neutral">{{ kanban[s]|length }}</span>
+            </div>
+            {% for p in kanban[s] %}
+            <div class="kanban-card" onclick="editProject({{ p.id }})">
+                <div class="card-title">{{ p.title[:15] }}{% if p.title|length > 15 %}...{% endif %}</div>
+                <div class="card-meta">
+                    {% if p.company %}{{ p.company.name[:12] }} · {% endif %}
+                    {% if p.amount %}{{ "%.0f"|format(p.amount) }}万{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 列表视图 -->
+<div id="listView" class="hidden">
+    <div class="filter-bar">
+        {% for s in stages %}
+        <a href="?stage={{ s }}" class="btn btn-sm {{ 'btn-primary' if current_stage == s else 'btn-outline' }}">{{ s }}</a>
+        {% endfor %}
+        <a href="/admin/projects" class="btn btn-sm {{ 'btn-primary' if not current_stage else 'btn-outline' }}">全部</a>
+    </div>
+    <div class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>项目名称</th>
+                <th>企业</th>
+                <th>赛道</th>
+                <th>阶段</th>
+                <th>投资额(万元)</th>
+                <th>负责人</th>
+                <th>预计日期</th>
+                <th>最近更新</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in projects %}
+            <tr>
+                <td><strong>{{ p.title }}</strong></td>
+                <td>{{ p.company.name if p.company else '-' }}</td>
+                <td>
+                    {% if p.industry_track %}
+                    <span class="badge badge-track-{{ 'sense' if '感知' in p.industry_track else 'vision' if '视觉' in p.industry_track else 'equip' if '装备' in p.industry_track else 'compute' if '算力' in p.industry_track else 'neutral' }}">
+                        {{ p.industry_track }}
+                    </span>
+                    {% else %}-{% endif %}
+                </td>
+                <td>
+                    <span class="badge badge-stage-{{ 'lead' if p.stage == '线索' else 'negotiate' if p.stage == '洽谈' else 'sign' if p.stage == '签约' else 'settle' if p.stage == '落地' else 'produce' }}">
+                        {{ p.stage }}
+                    </span>
+                </td>
+                <td class="amount">{{ "%.0f"|format(p.amount) if p.amount else '-' }}</td>
+                <td>{{ p.owner.display_name if p.owner else '-' }}</td>
+                <td>{{ p.expected_date or '-' }}</td>
+                <td class="nowrap">{{ p.updated_at.strftime('%m-%d %H:%M') if p.updated_at else '-' }}</td>
+                <td class="nowrap">
+                    <button class="btn btn-xs btn-outline" onclick="editProject({{ p.id }})" title="编辑"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-xs btn-outline" onclick="showFollowupModal({{ p.id }})" title="添加跟进"><i class="bi bi-chat-dots"></i></button>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" class="text-center text-tertiary" style="padding:32px;">暂无项目数据</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <ul class="pagination">
+        {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+        {% if p %}
+        <li class="page-item {{ 'active' if p == pagination.page }}">
+            <a class="page-link" href="?page={{ p }}{{ '&stage=' + current_stage if current_stage }}">{{ p }}</a>
+        </li>
+        {% else %}
+        <li class="page-item"><span class="page-link">...</span></li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+<!-- 新增/编辑项目 Modal -->
+<div class="modal" id="addProjectModal">
+    <div class="modal-backdrop" onclick="hideModal('addProjectModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span id="projectModalTitle">新增项目</span>
+            <button class="modal-close" onclick="hideModal('addProjectModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="projectId">
+            <div class="form-group">
+                <label>项目名称</label>
+                <input type="text" id="projectTitle" class="form-control" placeholder="项目名称">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>关联企业</label>
+                    <select id="projectCompany" class="form-control">
+                        <option value="">选择企业</option>
+                        {% for c in companies %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>当前阶段</label>
+                    <select id="projectStage" class="form-control">
+                        {% for s in stages %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>投资额（万元）</label>
+                    <input type="number" id="projectAmount" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>赛道</label>
+                    <select id="projectTrack" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="智能感知">智能感知</option>
+                        <option value="工业视觉">工业视觉</option>
+                        <option value="装备智能">装备智能</option>
+                        <option value="算力配套">算力配套</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>负责人</label>
+                    <select id="projectOwner" class="form-control">
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {{ 'selected' if u.id == current_user.id }}>{{ u.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>预计落地日期</label>
+                    <input type="date" id="projectExpected" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <textarea id="projectNotes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('addProjectModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveProject()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 跟进记录 Modal -->
+<div class="modal" id="followupModal">
+    <div class="modal-backdrop" onclick="hideModal('followupModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span>添加跟进记录</span>
+            <button class="modal-close" onclick="hideModal('followupModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="followupProjectId">
+            <div class="form-group">
+                <label>跟进内容</label>
+                <textarea id="followupContent" class="form-control" rows="3" placeholder="沟通内容、客户反馈等"></textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>下一步计划</label>
+                    <input type="text" id="followupNext" class="form-control" placeholder="下一步行动计划">
+                </div>
+                <div class="form-group">
+                    <label>对接人</label>
+                    <input type="text" id="followupPerson" class="form-control" placeholder="客户方对接人">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>跟进日期</label>
+                <input type="date" id="followupDate" class="form-control">
+            </div>
+            <!-- 最近跟进记录 -->
+            <div id="followupHistory" class="mt-3"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('followupModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveFollowup()">保存跟进</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchView(view) {
+    document.getElementById('kanbanView').classList.toggle('hidden', view !== 'kanban');
+    document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+    document.getElementById('kanbanViewBtn').className = view === 'kanban' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+    document.getElementById('listViewBtn').className = view === 'list' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+}
+
+function editProject(id) {
+    // 通过行数据获取项目信息 (简化处理，直接打开编辑modal)
+    document.getElementById('projectId').value = id;
+    document.getElementById('projectModalTitle').textContent = '编辑项目';
+    showModal('addProjectModal');
+    // 实际应由API获取数据填充表单，此处简化
+}
+
+function saveProject() {
+    var id = document.getElementById('projectId').value;
+    var data = {
+        title: document.getElementById('projectTitle').value,
+        company_id: document.getElementById('projectCompany').value || null,
+        stage: document.getElementById('projectStage').value,
+        amount: parseFloat(document.getElementById('projectAmount').value) || 0,
+        industry_track: document.getElementById('projectTrack').value,
+        owner_id: document.getElementById('projectOwner').value || null,
+        expected_date: document.getElementById('projectExpected').value,
+        notes: document.getElementById('projectNotes').value
+    };
+    var url = id ? '/api/projects/' + id : '/api/projects';
+    fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '操作失败'); })
+    .catch(function(e) { alert('网络错误'); });
+}
+
+function showFollowupModal(projectId) {
+    document.getElementById('followupProjectId').value = projectId;
+    document.getElementById('followupDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('followupHistory').innerHTML = '';
+
+    fetch('/api/projects/' + projectId + '/followups')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.followups && d.followups.length) {
+                var html = '<h5 style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">历史跟进</h5>';
+                d.followups.forEach(function(f) {
+                    html += '<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border-light);">' +
+                        '<span class="text-tertiary">' + (f.follow_date || '') + '</span> ' +
+                        (f.creator_name || '') + '<br>' + (f.content || '') + '</div>';
+                });
+                document.getElementById('followupHistory').innerHTML = html;
+            }
+        });
+    showModal('followupModal');
+}
+
+function saveFollowup() {
+    var projectId = document.getElementById('followupProjectId').value;
+    var data = {
+        content: document.getElementById('followupContent').value,
+        next_step: document.getElementById('followupNext').value,
+        contact_person: document.getElementById('followupPerson').value,
+        follow_date: document.getElementById('followupDate').value
+    };
+    fetch('/api/projects/' + projectId + '/followups', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '保存失败'); })
+    .catch(function(e) { alert('网络错误'); });
+}
+
+// 新增项目时重置
+var addBtn = document.querySelector('[onclick="showModal(\'addProjectModal\')"]');
+if (addBtn) {
+    addBtn.addEventListener('click', function() {
+        document.getElementById('projectId').value = '';
+        document.getElementById('projectModalTitle').textContent = '新增项目';
+        document.getElementById('projectTitle').value = '';
+        document.getElementById('projectCompany').value = '';
+        document.getElementById('projectStage').value = '线索';
+        document.getElementById('projectAmount').value = 0;
+        document.getElementById('projectTrack').value = '';
+        document.getElementById('projectExpected').value = '';
+        document.getElementById('projectNotes').value = '';
+    });
+}
+</script>
+{% endblock %}

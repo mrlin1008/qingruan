@@ -1,0 +1,155 @@
+{% extends "public_base.html" %}
+{% block title %}空间载体 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">空间载体</h1>
+    <p>数字经济产业园双载体 — 孵化区14.5万㎡ + 制造区10栋标准厂房，初创→中试→量产无缝衔接</p>
+</section>
+
+<!-- 孵化区 -->
+<section class="portal-section">
+    <h2><i class="bi bi-lightbulb" style="color:var(--accent);"></i> 数字经济研发服务中心（孵化区）</h2>
+    <p class="section-desc">已建成14.5万㎡孵化、众创、办公楼宇，配备湖南未来光电技术研究院专属场地1960㎡</p>
+    <div class="space-cards">
+        {% for s in incubator %}
+        <div class="space-card">
+            <div class="space-card-header" style="background:{{ '#e6f7f1' if s.status == 'occupied' else '#f8f9fb' }};">
+                <span>{{ s.name }}</span>
+                <span class="badge {{ 'badge-success' if s.status == 'occupied' else 'badge-primary' if s.status == 'available' else 'badge-warning' }}">
+                    {{ '已入驻' if s.status == 'occupied' else '可租' if s.status == 'available' else '已预订' }}
+                </span>
+            </div>
+            <div class="space-card-body">
+                <div class="param"><span>位置</span><span>{{ s.building }} {{ s.floor }}</span></div>
+                <div class="param"><span>总面积</span><span>{{ s.total_area }} ㎡</span></div>
+                <div class="param"><span>可用面积</span><span class="{{ 'text-success fw-600' if s.available_area > 0 else 'text-tertiary' }}">{{ s.available_area }} ㎡</span></div>
+                <div class="param"><span>层高</span><span>{{ s.floor_height }}</span></div>
+                <div class="param"><span>承重</span><span>{{ s.load_capacity }}</span></div>
+                <div class="param"><span>配电</span><span>{{ s.power_supply }}</span></div>
+                <div class="param"><span>配套</span><span>{{ s.supporting }}</span></div>
+                <div class="param"><span>租金</span><span>{{ s.rent_desc }}</span></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 制造区 -->
+<section class="portal-section" style="background:var(--surface);max-width:100%;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <h2><i class="bi bi-building-gear" style="color:var(--track-equip);"></i> 数字经济产业园（制造区）</h2>
+        <p class="section-desc">10栋标准厂房配套变电站、污水处理站，适配AI智能装备、传感器、光电元器件规模化生产</p>
+        <div class="space-cards">
+            {% for s in factory %}
+            <div class="space-card">
+                <div class="space-card-header" style="background:{{ '#e6f7f1' if s.status == 'occupied' else '#f8f9fb' }};">
+                    <span>{{ s.name }}</span>
+                    <span class="badge {{ 'badge-success' if s.status == 'occupied' else 'badge-primary' if s.status == 'available' else 'badge-warning' }}">
+                        {{ '已入驻' if s.status == 'occupied' else '可租' if s.status == 'available' else '已预订' }}
+                    </span>
+                </div>
+                <div class="space-card-body">
+                    <div class="param"><span>位置</span><span>{{ s.building }} {{ s.floor }}</span></div>
+                    <div class="param"><span>总面积</span><span>{{ s.total_area }} ㎡</span></div>
+                    <div class="param"><span>可用面积</span><span class="{{ 'text-success fw-600' if s.available_area > 0 else 'text-tertiary' }}">{{ s.available_area }} ㎡</span></div>
+                    <div class="param"><span>层高</span><span>{{ s.floor_height }}</span></div>
+                    <div class="param"><span>承重</span><span>{{ s.load_capacity }}</span></div>
+                    <div class="param"><span>配电</span><span>{{ s.power_supply }}</span></div>
+                    <div class="param"><span>配套</span><span>{{ s.supporting }}</span></div>
+                    <div class="param"><span>租金</span><span>{{ s.rent_desc }}</span></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 配套设施 -->
+<section class="portal-section">
+    <h2>配套设施与服务</h2>
+    <p class="section-desc">为入驻企业提供全方位的基础设施和运营服务保障</p>
+    <div class="grid-3" style="margin-top:32px;">
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-plug" style="font-size:28px;color:var(--track-compute);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">电力保障</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">双回路供电 · 虚拟电厂<br>500KVA/栋可扩容<br>省市绿电资源优先保障</p>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-droplet" style="font-size:28px;color:var(--track-sense);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">环保设施</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">污水处理站 · 废气处理<br>固废集中处置<br>环评绿色通道</p>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-wifi" style="font-size:28px;color:var(--accent);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">通信网络</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">全域5G覆盖 · 光纤入户<br>智算中心算力接入<br>大数据中心共享</p>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-truck" style="font-size:28px;color:var(--track-equip);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">物流交通</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">长张高速 · 益娄高速交汇<br>高铁益阳南站直达<br>距长沙黄花机场1h</p>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-people" style="font-size:28px;color:var(--success);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">人才公寓</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">配套人才公寓<br>子女入学绿色通道<br>24小时生活配套</p>
+        </div>
+        <div class="card" style="padding:24px;text-align:center;">
+            <i class="bi bi-headset" style="font-size:28px;color:var(--track-compute);margin-bottom:12px;display:block;"></i>
+            <h4 style="margin-bottom:8px;">企业服务</h4>
+            <p style="font-size:13px;color:var(--text-secondary);">24小时服务响应<br>AI改造服务中心<br>一站式方案诊断调试</p>
+        </div>
+    </div>
+</section>
+
+<!-- 园区实景 -->
+<section class="portal-section" id="parkGallery">
+    <h2>园区实景</h2>
+    <p class="section-desc">园区风光 · 孵化空间 · 制造厂房 · 配套设施</p>
+    <div id="parkImagesGrid" class="grid-3" style="gap:14px;margin-top:24px;">
+        <div class="text-center text-tertiary" style="grid-column:1/-1;padding:32px;">加载中...</div>
+    </div>
+</section>
+
+<section class="portal-hero" style="padding:48px 24px;">
+    <h2 style="font-size:24px;margin-bottom:12px;">寻找合适的产业空间？</h2>
+    <p style="margin-bottom:24px;">招商团队将根据您的项目需求，匹配最佳空间方案</p>
+    <a href="/contact" class="btn btn-primary" style="color:#fff;padding:12px 28px;font-size:14px;">
+        <i class="bi bi-chat-dots"></i> 在线提交需求
+    </a>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+fetch('/api/public/park-images')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (!d.ok || !d.images.length) {
+            document.getElementById('parkGallery').style.display = 'none';
+            return;
+        }
+        var grid = document.getElementById('parkImagesGrid');
+        grid.innerHTML = d.images.map(function(img) {
+            return '<div class="card" style="overflow:hidden;">' +
+                '<div style="height:200px;overflow:hidden;">' +
+                    '<a href="' + img.url + '" target="_blank">' +
+                        '<img src="' + img.url + '" alt="' + escapeHtml(img.category) + '" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s;" onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'">' +
+                    '</a>' +
+                '</div>' +
+                '<div style="padding:10px 14px;">' +
+                    '<span class="badge badge-neutral">' + escapeHtml(img.category) + '</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    });
+
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

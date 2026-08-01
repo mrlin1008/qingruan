@@ -1,0 +1,151 @@
+{% extends "admin_base.html" %}
+{% block title %}政策管理 — 管理后台{% endblock %}
+{% block page_title %}政策管理{% endblock %}
+
+{% block content %}
+<button class="btn btn-primary btn-sm mb-3" onclick="showPolicyModal()">
+    <i class="bi bi-plus-lg"></i> 新增政策
+</button>
+
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>类型</th>
+            <th>发布部门</th>
+            <th>发布日期</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in policies %}
+        <tr>
+            <td><strong>{{ p.title }}</strong></td>
+            <td><span class="badge badge-primary">{{ p.policy_type }}</span></td>
+            <td>{{ p.issuing_dept or '-' }}</td>
+            <td>{{ p.publish_date }}</td>
+            <td><span class="badge {{ 'badge-success' if p.status == 'published' else 'badge-neutral' }}">{{ '已发布' if p.status == 'published' else '草稿' }}</span></td>
+            <td>
+                <button class="btn btn-xs btn-outline" onclick="editPolicy({{ p.id }})"><i class="bi bi-pencil"></i></button>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-tertiary" style="padding:32px;">暂无政策数据</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- 新增/编辑 Modal -->
+<div class="modal" id="policyModal">
+    <div class="modal-backdrop" onclick="hideModal('policyModal')"></div>
+    <div class="modal-dialog" style="width:640px;">
+        <div class="modal-header">
+            <span id="policyModalTitle">新增政策</span>
+            <button class="modal-close" onclick="hideModal('policyModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="policyId">
+            <div class="form-group">
+                <label>标题</label>
+                <input type="text" id="policyTitle" class="form-control" placeholder="政策标题">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>类型</label>
+                    <select id="policyType" class="form-control">
+                        <option value="科技创新">科技创新</option>
+                        <option value="税收优惠">税收优惠</option>
+                        <option value="人才补贴">人才补贴</option>
+                        <option value="租金减免">租金减免</option>
+                        <option value="金融支持">金融支持</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>发布部门</label>
+                    <input type="text" id="policyDept" class="form-control" placeholder="发布部门">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>摘要</label>
+                <textarea id="policySummary" class="form-control" rows="2" placeholder="简要描述政策内容"></textarea>
+            </div>
+            <div class="form-group">
+                <label>完整内容</label>
+                <textarea id="policyContent" class="form-control" rows="4" placeholder="政策详细内容"></textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>适用条件</label>
+                    <input type="text" id="policyConditions" class="form-control" placeholder="如：年营收500万以上AI企业">
+                </div>
+                <div class="form-group">
+                    <label>发布日期</label>
+                    <input type="date" id="policyDate" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>状态</label>
+                <select id="policyStatus" class="form-control" style="width:auto;">
+                    <option value="published">已发布</option>
+                    <option value="draft">草稿</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('policyModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="savePolicy()">保存</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showPolicyModal() {
+    document.getElementById('policyId').value = '';
+    document.getElementById('policyModalTitle').textContent = '新增政策';
+    document.getElementById('policyTitle').value = '';
+    document.getElementById('policyType').value = '科技创新';
+    document.getElementById('policyDept').value = '';
+    document.getElementById('policySummary').value = '';
+    document.getElementById('policyContent').value = '';
+    document.getElementById('policyConditions').value = '';
+    document.getElementById('policyDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('policyStatus').value = 'published';
+    showModal('policyModal');
+}
+
+function editPolicy(id) {
+    document.getElementById('policyId').value = id;
+    document.getElementById('policyModalTitle').textContent = '编辑政策';
+    showModal('policyModal');
+}
+
+function savePolicy() {
+    var id = document.getElementById('policyId').value;
+    var data = {
+        title: document.getElementById('policyTitle').value,
+        policy_type: document.getElementById('policyType').value,
+        issuing_dept: document.getElementById('policyDept').value,
+        summary: document.getElementById('policySummary').value,
+        content: document.getElementById('policyContent').value,
+        applicable_conditions: document.getElementById('policyConditions').value,
+        publish_date: document.getElementById('policyDate').value,
+        status: document.getElementById('policyStatus').value
+    };
+    var url = id ? '/api/policies/' + id : '/api/policies';
+    fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '操作失败'); })
+    .catch(function(e) { alert('网络错误'); });
+}
+</script>
+{% endblock %}

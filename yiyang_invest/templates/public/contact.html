@@ -1,0 +1,109 @@
+{% extends "public_base.html" %}
+{% block title %}在线对接 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">在线对接</h1>
+    <p>留下您的项目意向，招商团队将在1-3个工作日内与您联系</p>
+</section>
+
+<section class="portal-section">
+    <div class="grid-2" style="align-items:start;">
+        <!-- 联系表单 -->
+        <div class="contact-form-wrap">
+            <h3 style="font-size:17px;margin-bottom:8px;">提交招商意向</h3>
+            <p class="small text-tertiary mb-3">请填写以下信息，我们将尽快回复</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="post" action="/contact">
+                <div class="form-group">
+                    <label>企业名称 <span style="color:var(--error);">*</span></label>
+                    <input type="text" name="company_name" class="form-control" placeholder="请输入企业全称" required>
+                </div>
+                <div class="form-group">
+                    <label>联系人 <span style="color:var(--error);">*</span></label>
+                    <input type="text" name="contact_person" class="form-control" placeholder="请输入联系人姓名" required>
+                </div>
+                <div class="form-group">
+                    <label>联系电话 <span style="color:var(--error);">*</span></label>
+                    <input type="tel" name="contact_phone" class="form-control" placeholder="请输入手机号码" required>
+                </div>
+                <div class="form-group">
+                    <label>意向赛道</label>
+                    <select name="industry_track" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="智能感知">智能感知</option>
+                        <option value="工业视觉">工业视觉</option>
+                        <option value="装备智能">装备智能</option>
+                        <option value="算力配套">算力配套</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>投资意向程度</label>
+                    <select name="intent_level" class="form-control">
+                        <option value="高">意向强烈，近期决策</option>
+                        <option value="中" selected>有意向，进一步了解</option>
+                        <option value="低">初步了解</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>备注说明</label>
+                    <textarea name="notes" class="form-control" rows="3" placeholder="如有空间面积、产业方向等具体要求，欢迎在此说明"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;font-size:15px;font-weight:600;">
+                    <i class="bi bi-send"></i> 提交意向
+                </button>
+            </form>
+        </div>
+
+        <!-- 联系信息 -->
+        <div>
+            <div class="card" style="padding:28px;margin-bottom:20px;">
+                <h3 style="font-size:17px;margin-bottom:16px;"><i class="bi bi-telephone" style="color:var(--accent);"></i> 招商热线</h3>
+                <p style="font-size:20px;font-weight:700;color:var(--accent);">0737-XXXXXXX</p>
+                <p class="small text-tertiary mt-2">工作日 8:30-17:30</p>
+            </div>
+
+            <div class="card" style="padding:28px;margin-bottom:20px;">
+                <h3 style="font-size:17px;margin-bottom:16px;"><i class="bi bi-geo-alt" style="color:var(--success);"></i> 园区地址</h3>
+                <p style="line-height:1.8;">湖南省益阳市高新区<br>数字经济产业园</p>
+                <p class="small text-tertiary mt-2">距益阳南站约15分钟车程</p>
+            </div>
+
+            <div class="card" style="padding:28px;">
+                <h3 style="font-size:17px;margin-bottom:16px;"><i class="bi bi-clock-history" style="color:var(--track-equip);"></i> 招商流程</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">第1步</div>
+                        <div class="timeline-content">提交意向 → 招商团队1-3个工作日内联系</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">第2步</div>
+                        <div class="timeline-content">需求沟通 → 了解您的项目需求和发展规划</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">第3步</div>
+                        <div class="timeline-content">方案匹配 → 推荐合适的空间和政策组合</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">第4步</div>
+                        <div class="timeline-content">实地考察 → 参观园区空间和配套设施</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">第5步</div>
+                        <div class="timeline-content">签约落地 → 合同签订、入驻服务</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

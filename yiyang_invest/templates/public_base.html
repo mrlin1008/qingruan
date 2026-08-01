@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_desc %}益阳高新区智慧招商平台 — 长株潭协同型光电+工业人工智能特色产业集聚区{% endblock %}">
+    <title>{% block title %}益阳高新区 · 智慧招商{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+<!-- 顶部导航 -->
+<nav class="portal-nav">
+    <div class="portal-nav-inner">
+        <a href="/" class="portal-brand">
+            <i class="bi bi-building"></i>
+            <span>益阳高新区 · 智慧招商</span>
+        </a>
+        <button class="portal-menu-btn" onclick="document.querySelector('.portal-nav-links').classList.toggle('open')">
+            <i class="bi bi-list"></i>
+        </button>
+        <div class="portal-nav-links">
+            <a href="/" class="{{ 'active' if request.path == '/' }}">首页</a>
+            <a href="/industry" class="{{ 'active' if request.path == '/industry' }}">产业生态</a>
+            <a href="/space" class="{{ 'active' if request.path == '/space' }}">空间载体</a>
+            <a href="/policy" class="{{ 'active' if request.path == '/policy' }}">政策服务</a>
+            <a href="/contact" class="btn btn-primary btn-sm" style="color:#fff;">在线对接</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 内容区 -->
+<main class="portal-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="portal-flash">
+        {% for category, message in messages %}
+        <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+
+<!-- 页脚 -->
+<footer class="portal-footer">
+    <div class="portal-footer-inner">
+        <div class="footer-col">
+            <h4>益阳高新区</h4>
+            <p>长株潭协同型光电+工业人工智能特色产业集聚区</p>
+            <p>聚焦智能感知 · 工业视觉 · 装备智能 · 算力配套</p>
+        </div>
+        <div class="footer-col">
+            <h4>招商热线</h4>
+            <p><i class="bi bi-telephone"></i> 0737-XXXXXXX</p>
+            <p><i class="bi bi-envelope"></i> invest@yiyang-hitech.gov.cn</p>
+            <p><i class="bi bi-geo-alt"></i> 益阳市高新区数字经济产业园</p>
+        </div>
+        <div class="footer-col">
+            <h4>快速链接</h4>
+            <a href="/industry">产业生态</a>
+            <a href="/space">空间载体</a>
+            <a href="/policy">政策服务</a>
+            <a href="/contact">在线对接</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; 2026 益阳高新区管委会 · 产业发展局
+    </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

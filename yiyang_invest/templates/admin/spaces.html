@@ -1,0 +1,91 @@
+{% extends "admin_base.html" %}
+{% block title %}空间管理 — 管理后台{% endblock %}
+{% block page_title %}空间资源管理{% endblock %}
+
+{% block content %}
+<div class="nav-tabs">
+    <a class="nav-link active" id="tabIncubator" onclick="switchTab('incubator')">孵化区</a>
+    <a class="nav-link" id="tabFactory" onclick="switchTab('factory')">制造区</a>
+</div>
+
+<!-- 孵化区 -->
+<div id="incubatorTab">
+    <div class="space-cards">
+        {% for s in incubator %}
+        <div class="space-card">
+            <div class="space-card-header" style="background:{{ '#e6f7f1' if s.status == 'occupied' else '#f8f9fb' }};">
+                <span>{{ s.name }}</span>
+                <select onchange="updateSpaceStatus({{ s.id }}, this.value)" class="form-control" style="width:auto;font-size:11px;padding:2px 6px;">
+                    <option value="available" {{ 'selected' if s.status == 'available' }}>可租</option>
+                    <option value="reserved" {{ 'selected' if s.status == 'reserved' }}>已预订</option>
+                    <option value="occupied" {{ 'selected' if s.status == 'occupied' }}>已入驻</option>
+                </select>
+            </div>
+            <div class="space-card-body">
+                <div class="param"><span>楼栋/楼层</span><span>{{ s.building }} {{ s.floor }}</span></div>
+                <div class="param"><span>总面积</span><span>{{ s.total_area }} ㎡</span></div>
+                <div class="param"><span>可用面积</span><span class="{{ 'text-success fw-600' if s.available_area > 0 else 'text-tertiary' }}">{{ s.available_area }} ㎡</span></div>
+                <div class="param"><span>层高</span><span>{{ s.floor_height }}</span></div>
+                <div class="param"><span>承重</span><span>{{ s.load_capacity }}</span></div>
+                <div class="param"><span>配电</span><span>{{ s.power_supply }}</span></div>
+                <div class="param"><span>使用率</span><span>{{ ((1 - s.available_area / s.total_area * 100) if s.total_area else 0)|int }}%</span></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not incubator %}
+    <p class="text-center text-tertiary" style="padding:48px;">暂无孵化区空间数据</p>
+    {% endif %}
+</div>
+
+<!-- 制造区 -->
+<div id="factoryTab" class="hidden">
+    <div class="space-cards">
+        {% for s in factory %}
+        <div class="space-card">
+            <div class="space-card-header" style="background:{{ '#e6f7f1' if s.status == 'occupied' else '#f8f9fb' }};">
+                <span>{{ s.name }}</span>
+                <select onchange="updateSpaceStatus({{ s.id }}, this.value)" class="form-control" style="width:auto;font-size:11px;padding:2px 6px;">
+                    <option value="available" {{ 'selected' if s.status == 'available' }}>可租</option>
+                    <option value="reserved" {{ 'selected' if s.status == 'reserved' }}>已预订</option>
+                    <option value="occupied" {{ 'selected' if s.status == 'occupied' }}>已入驻</option>
+                </select>
+            </div>
+            <div class="space-card-body">
+                <div class="param"><span>楼栋/楼层</span><span>{{ s.building }} {{ s.floor }}</span></div>
+                <div class="param"><span>总面积</span><span>{{ s.total_area }} ㎡</span></div>
+                <div class="param"><span>可用面积</span><span class="{{ 'text-success fw-600' if s.available_area > 0 else 'text-tertiary' }}">{{ s.available_area }} ㎡</span></div>
+                <div class="param"><span>层高</span><span>{{ s.floor_height }}</span></div>
+                <div class="param"><span>承重</span><span>{{ s.load_capacity }}</span></div>
+                <div class="param"><span>配电</span><span>{{ s.power_supply }}</span></div>
+                <div class="param"><span>价格</span><span>{{ s.rent_desc }}</span></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not factory %}
+    <p class="text-center text-tertiary" style="padding:48px;">暂无制造区空间数据</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchTab(tab) {
+    document.getElementById('incubatorTab').classList.toggle('hidden', tab !== 'incubator');
+    document.getElementById('factoryTab').classList.toggle('hidden', tab !== 'factory');
+    document.getElementById('tabIncubator').classList.toggle('active', tab === 'incubator');
+    document.getElementById('tabFactory').classList.toggle('active', tab === 'factory');
+}
+
+function updateSpaceStatus(id, status) {
+    fetch('/api/spaces/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: status})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (!d.ok) alert(d.msg || '更新失败'); });
+}
+</script>
+{% endblock %}

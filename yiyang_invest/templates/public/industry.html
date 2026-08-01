@@ -1,0 +1,266 @@
+{% extends "public_base.html" %}
+{% block title %}产业生态 — 益阳高新区智慧招商{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">产业生态</h1>
+    <p>四大赛道产业链全景图谱 — 智能感知 · 工业视觉 · 装备智能 · 算力配套</p>
+</section>
+
+<!-- 产业链图谱 -->
+<section class="portal-section">
+    <h2>产业链全景图谱</h2>
+    <p class="section-desc">绿色节点已有产业基础，橙色为招商缺口，蓝色为目标客商方向</p>
+    <div id="chainGraph" class="chain-graph"></div>
+
+    <!-- 赛道筛选 -->
+    <div class="nav-tabs" style="margin-top:24px;" id="trackTabs">
+        {% for track in tracks %}
+        <a class="nav-link {{ 'active' if loop.first }}" data-track="{{ track }}">{{ track }}</a>
+        {% endfor %}
+    </div>
+
+    <div id="trackDetail" style="margin-top:20px;"></div>
+</section>
+
+<!-- 龙头企业 -->
+<section class="portal-section" style="background:var(--surface);max-width:100%;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <h2>龙头企业与创新平台</h2>
+        <p class="section-desc">产业基础扎实，为AI技术落地提供丰富应用场景</p>
+        <div class="grid-3" style="margin-top:32px;">
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--track-equip);margin-bottom:12px;"><i class="bi bi-truck"></i> 高端装备</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    三一重工 · 路面机械AI数字孪生工厂<br>
+                    益阳橡机 · 橡塑机械智能化升级<br>
+                    科力远 · 新能源装备制造
+                </p>
+            </div>
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--track-sense);margin-bottom:12px;"><i class="bi bi-cpu"></i> 电子信息</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    信维电科 · MLCC智能质检大模型<br>
+                    艾迪奥 · 电子元器件量产<br>
+                    麓宇光电 · 电致变色/激光雷达
+                </p>
+            </div>
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--track-vision);margin-bottom:12px;"><i class="bi bi-droplet"></i> 新材料</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    金博股份 · 碳基材料智能调控<br>
+                    碳谷新材料 · 先进碳材料<br>
+                    26个省级数字化转型项目
+                </p>
+            </div>
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--accent);margin-bottom:12px;"><i class="bi bi-mortarboard"></i> 创新平台</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    湖南未来光电技术研究院<br>
+                    中南大学成果转化基地<br>
+                    中南科创园 · 众创孵化
+                </p>
+            </div>
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--track-compute);margin-bottom:12px;"><i class="bi bi-cloud-arrow-up"></i> 算力设施</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    益阳智算中心 · AI训练推理<br>
+                    全省第二家虚拟电厂<br>
+                    全域5G基站覆盖
+                </p>
+            </div>
+            <div class="card" style="padding:24px;">
+                <h4 style="color:var(--success);margin-bottom:12px;"><i class="bi bi-diagram-3"></i> 招商方向</h4>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    传感器 / 工业软件<br>
+                    AI系统集成 / 工业机器人<br>
+                    数据中心配套 / 储能系统
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var chartDom = document.getElementById('chainGraph');
+    if (!chartDom) return;
+
+    // 先显示加载提示
+    chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);"><i class="bi bi-arrow-repeat"></i> 加载产业链数据...</div>';
+
+    // 赛道颜色映射
+    var trackColors = {
+        '智能感知': '#3b82f6',
+        '工业视觉': '#0ca678',
+        '装备智能': '#f08c00',
+        '算力配套': '#8b5cf6'
+    };
+
+    // gap 样式
+    var gapBorderColor = {
+        '完善': '#0ca678',
+        '薄弱': '#f08c00',
+        '空白': '#e03131'
+    };
+    var gapBorderType = {
+        '完善': 'solid',
+        '薄弱': 'dashed',
+        '空白': 'dashed'
+    };
+
+    fetch('/api/industry-chain')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.nodes || !data.nodes.length) {
+                chartDom.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-tertiary);">暂无产业链数据</p>';
+                return;
+            }
+
+            var chart = echarts.init(chartDom);
+
+            // 收集所有赛道作为 categories
+            var trackSet = {};
+            data.nodes.forEach(function(n) {
+                if (n.track && !trackSet[n.track]) {
+                    trackSet[n.track] = true;
+                }
+            });
+            var categories = Object.keys(trackSet).map(function(name) {
+                return { name: name, itemStyle: { color: trackColors[name] || '#1e5bff' } };
+            });
+
+            var nodes = data.nodes.map(function(n) {
+                var color = trackColors[n.track] || '#1e5bff';
+                var borderCol = gapBorderColor[n.gap] || color;
+                var borderType = gapBorderType[n.gap] || 'solid';
+                var isParent = !n.position;  // 无 chain_position 的是父节点
+
+                return {
+                    name: n.name,
+                    symbolSize: isParent ? 55 : 35,
+                    category: n.track || '未分类',
+                    itemStyle: {
+                        color: color,
+                        borderColor: borderCol,
+                        borderWidth: isParent ? 3 : 2,
+                        borderType: borderType
+                    },
+                    label: {
+                        show: true,
+                        fontSize: isParent ? 14 : 11,
+                        fontWeight: isParent ? 700 : 400,
+                        color: '#333'
+                    },
+                    // 自定义数据用于 tooltip
+                    _desc: n.description || '',
+                    _track: n.track || '',
+                    _gap: n.gap || ''
+                };
+            });
+
+            var links = data.links.map(function(l) {
+                return { source: l.source, target: l.target };
+            });
+
+            chart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(p) {
+                        if (p.dataType === 'edge') {
+                            return p.data.source + ' → ' + p.data.target;
+                        }
+                        var d = p.data;
+                        var html = '<b>' + d.name + '</b>';
+                        if (d._track) html += '<br/>赛道：' + d._track;
+                        if (d._gap) {
+                            var gapLabel = d._gap === '空白' ? '🔴 招商空白' : d._gap === '薄弱' ? '🟡 薄弱环节' : '🟢 已有基础';
+                            html += '<br/>' + gapLabel;
+                        }
+                        if (d._desc) html += '<br/>' + d._desc;
+                        return html;
+                    }
+                },
+                legend: {
+                    data: categories.map(function(c) { return c.name; }),
+                    bottom: 10,
+                    textStyle: { fontSize: 12 }
+                },
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    roam: true,
+                    draggable: true,
+                    categories: categories,
+                    force: {
+                        repulsion: 350,
+                        edgeLength: [120, 250],
+                        gravity: 0.08
+                    },
+                    data: nodes,
+                    links: links,
+                    lineStyle: {
+                        color: '#bbb',
+                        curveness: 0.15,
+                        width: 1.5
+                    },
+                    emphasis: {
+                        focus: 'adjacency',
+                        lineStyle: { width: 3 }
+                    }
+                }]
+            });
+
+            window.addEventListener('resize', function() { chart.resize(); });
+        })
+        .catch(function(err) {
+            chartDom.innerHTML = '<p style="text-align:center;padding:40px;color:var(--error);">数据加载失败，请刷新重试</p>';
+            console.error('产业链数据加载失败:', err);
+        });
+
+    // 赛道Tabs点击
+    var trackDetail = document.getElementById('trackDetail');
+    var tabLinks = document.querySelectorAll('#trackTabs .nav-link');
+    var chainData = {{ chains | tojson | safe }};
+
+    function renderTrack(track) {
+        var nodes = chainData.filter(function(c) { return c.track === track; });
+        if (!nodes.length) { trackDetail.innerHTML = ''; return; }
+
+        var html = '<div class="grid-2">';
+        nodes.forEach(function(n) {
+            var gapBadge = '';
+            if (n.gap_level === '空白') gapBadge = '<span class="badge badge-danger">招商空白</span>';
+            else if (n.gap_level === '薄弱') gapBadge = '<span class="badge badge-warning">薄弱环节</span>';
+            else if (n.gap_level === '完善') gapBadge = '<span class="badge badge-success">已有基础</span>';
+
+            html += '<div class="policy-card">' +
+                '<h4>' + n.name + ' ' + gapBadge + '</h4>' +
+                '<p class="meta">' + (n.chain_position || track) + '</p>' +
+                '<p class="summary">' + (n.description || '') + '</p>' +
+                '</div>';
+        });
+        html += '</div>';
+        trackDetail.innerHTML = html;
+    }
+
+    tabLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            tabLinks.forEach(function(l) { l.classList.remove('active'); });
+            link.classList.add('active');
+            renderTrack(link.dataset.track);
+        });
+    });
+
+    // 默认显示第一个赛道
+    var activeTab = document.querySelector('#trackTabs .nav-link.active');
+    if (activeTab) renderTrack(activeTab.dataset.track);
+})();
+</script>
+{% endblock %}

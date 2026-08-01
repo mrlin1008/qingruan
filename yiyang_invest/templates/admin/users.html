@@ -1,0 +1,139 @@
+{% extends "admin_base.html" %}
+{% block title %}用户管理 — 管理后台{% endblock %}
+{% block page_title %}用户管理{% endblock %}
+
+{% block content %}
+<button class="btn btn-primary btn-sm mb-3" onclick="showUserModal()">
+    <i class="bi bi-plus-lg"></i> 新增用户
+</button>
+
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>用户名</th>
+            <th>姓名</th>
+            <th>角色</th>
+            <th>手机</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.display_name }}</td>
+            <td><span class="badge {{ 'badge-primary' if u.role == 'admin' else 'badge-info' if u.role == 'manager' else 'badge-neutral' }}">{{ u.role_label }}</span></td>
+            <td>{{ u.phone or '-' }}</td>
+            <td><span class="badge {{ 'badge-success' if u.is_active else 'badge-danger' }}">{{ '启用' if u.is_active else '停用' }}</span></td>
+            <td class="nowrap">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '-' }}</td>
+            <td>
+                <button class="btn btn-xs btn-outline" onclick="editUser({{ u.id }})"><i class="bi bi-pencil"></i></button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- 新增/编辑 Modal -->
+<div class="modal" id="userModal">
+    <div class="modal-backdrop" onclick="hideModal('userModal')"></div>
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span id="userModalTitle">新增用户</span>
+            <button class="modal-close" onclick="hideModal('userModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="userId">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="userUsername" class="form-control" placeholder="登录用户名">
+            </div>
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="userDisplayName" class="form-control" placeholder="显示姓名">
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>角色</label>
+                    <select id="userRole" class="form-control">
+                        <option value="staff">招商专员</option>
+                        <option value="manager">招商经理</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>手机</label>
+                    <input type="tel" id="userPhone" class="form-control" placeholder="手机号码">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="userPassword" class="form-control" placeholder="留空则不修改密码">
+                </div>
+                <div class="form-group">
+                    <label>状态</label>
+                    <select id="userActive" class="form-control" style="width:auto;">
+                        <option value="1">启用</option>
+                        <option value="0">停用</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="hideModal('userModal')">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveUser()">保存</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showUserModal() {
+    document.getElementById('userId').value = '';
+    document.getElementById('userModalTitle').textContent = '新增用户';
+    document.getElementById('userUsername').value = '';
+    document.getElementById('userDisplayName').value = '';
+    document.getElementById('userRole').value = 'staff';
+    document.getElementById('userPhone').value = '';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userActive').value = '1';
+    showModal('userModal');
+}
+
+function editUser(id) {
+    document.getElementById('userId').value = id;
+    document.getElementById('userModalTitle').textContent = '编辑用户';
+    document.getElementById('userPassword').value = '';
+    showModal('userModal');
+}
+
+function saveUser() {
+    var id = document.getElementById('userId').value;
+    var data = {
+        username: document.getElementById('userUsername').value,
+        display_name: document.getElementById('userDisplayName').value,
+        role: document.getElementById('userRole').value,
+        phone: document.getElementById('userPhone').value,
+        is_active: document.getElementById('userActive').value === '1'
+    };
+    var pw = document.getElementById('userPassword').value;
+    if (pw) data.password = pw;
+
+    var url = id ? '/api/users/' + id : '/api/users';
+    fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(d.msg || '操作失败'); })
+    .catch(function(e) { alert('网络错误: ' + e.message); });
+}
+</script>
+{% endblock %}
