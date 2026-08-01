@@ -1,0 +1,112 @@
+{% extends "public_base.html" %}
+{% block title %}下游应用商专区 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">下游应用商专区</h1>
+    <p>链主企业技术能力与产业资源展示 — 来益阳，核心技术和产能就在手边</p>
+</section>
+
+<!-- 链主企业能力概览 -->
+<section class="portal-section">
+    <h2>链主企业开放能力</h2>
+    <p class="section-desc">以下链主企业对外开放技术合作、产线测试、算力服务和产品供应</p>
+    <div class="grid-3" style="margin-top:24px;">
+        {% for c in chain_leaders %}
+        <div class="card" style="padding:20px; border-left: 3px solid var(--track-compute);">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:8px;background:var(--track-compute);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-cpu" style="font-size:20px;color:#fff;"></i>
+                </div>
+                <div>
+                    <h4 style="margin:0;font-size:15px;">{{ c.name }}</h4>
+                    <span class="badge badge-track-{{ 'sense' if c.industry_track=='智能感知' else 'vision' if c.industry_track=='工业视觉' else 'equip' if c.industry_track=='装备智能' else 'compute' if c.industry_track=='算力配套' else 'neutral' }}" style="font-size:11px;">{{ c.industry_track }}</span>
+                </div>
+            </div>
+            {% if c.description %}
+            <p class="small" style="margin-top:10px;line-height:1.6;color:var(--text-secondary);">
+                {{ c.description[:100] }}{% if c.description|length > 100 %}...{% endif %}
+            </p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 技术能力列表 -->
+<section class="portal-section">
+    <h2>开放能力清单</h2>
+    <p class="section-desc">链主企业对外开放的技术能力、产品供应和合作机会</p>
+
+    <div class="filter-bar" style="margin:20px 0;">
+        <a href="/downstream-zone" class="btn btn-sm {{ 'btn-primary' if not current_track and not current_cap_type else 'btn-outline' }}">全部</a>
+        {% for t in tracks %}
+        <a href="/downstream-zone?track={{ t }}" class="btn btn-sm {{ 'btn-primary' if current_track==t else 'btn-outline' }}">{{ t }}</a>
+        {% endfor %}
+        {% for ct in cap_types %}
+        <a href="/downstream-zone?cap_type={{ ct }}" class="btn btn-sm {{ 'btn-primary' if current_cap_type==ct else 'btn-outline' }}">{{ ct }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="grid-2" style="margin-top:8px;">
+        {% for cap in capabilities %}
+        <div class="card" style="border-left: 3px solid var(--track-compute);">
+            <div class="card-body" style="padding:20px;">
+                <div class="d-flex gap-1 flex-wrap mb-2">
+                    <span class="badge badge-accent">{{ cap.capability_type }}</span>
+                    {% if cap.industry_track %}<span class="badge badge-neutral">{{ cap.industry_track }}</span>{% endif %}
+                </div>
+                <h4 class="fw-600" style="font-size:15px;margin-bottom:8px;">{{ cap.title }}</h4>
+                <div class="small mb-2" style="color:var(--text-secondary);">
+                    <i class="bi bi-building"></i> <strong>{{ cap.chain_company.name if cap.chain_company else '-' }}</strong>
+                </div>
+                {% if cap.description %}
+                <p class="small text-secondary" style="line-height:1.6;">{{ cap.description[:120] }}{% if cap.description|length > 120 %}...{% endif %}</p>
+                {% endif %}
+                {% if cap.applicable_scenarios %}
+                <div class="p-2 rounded" style="background:var(--surface);margin-top:8px;">
+                    <span class="small fw-600" style="color:var(--track-compute);">🎯 适用场景：</span>
+                    <span class="small text-secondary">{{ cap.applicable_scenarios[:100] }}{% if cap.applicable_scenarios|length > 100 %}...{% endif %}</span>
+                </div>
+                {% endif %}
+                {% if cap.contact_info %}
+                <div class="small mt-2" style="color:var(--text-tertiary);"><i class="bi bi-telephone"></i> {{ cap.contact_info }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center" style="padding:60px 20px;grid-column:1/-1;">
+            <i class="bi bi-inbox" style="font-size:48px;color:var(--text-tertiary);"></i>
+            <p style="color:var(--text-tertiary);margin-top:8px;">暂无开放能力</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 入驻引导 -->
+<section class="portal-section" style="background:var(--surface);max-width:100%;">
+    <div style="max-width:800px;margin:0 auto;text-align:center;">
+        <h2>我是下游应用商，如何合作？</h2>
+        <div class="grid-3" style="margin-top:28px;">
+            <div class="text-center" style="padding:20px;">
+                <div style="width:48px;height:48px;border-radius:50%;background:var(--track-compute);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin-bottom:12px;">1</div>
+                <h4 style="font-size:14px;">浏览技术能力</h4>
+                <p class="small" style="color:var(--text-tertiary);">查看链主企业开放的算力、产线、技术合作资源</p>
+            </div>
+            <div class="text-center" style="padding:20px;">
+                <div style="width:48px;height:48px;border-radius:50%;background:var(--track-compute);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin-bottom:12px;">2</div>
+                <h4 style="font-size:14px;">提交合作意向</h4>
+                <p class="small" style="color:var(--text-tertiary);">通过在线表单提交企业信息和合作方向</p>
+            </div>
+            <div class="text-center" style="padding:20px;">
+                <div style="width:48px;height:48px;border-radius:50%;background:var(--track-compute);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin-bottom:12px;">3</div>
+                <h4 style="font-size:14px;">招商团队对接</h4>
+                <p class="small" style="color:var(--text-tertiary);">1-3个工作日专人对接，匹配最佳合作方案</p>
+            </div>
+        </div>
+        <a href="/contact" class="btn btn-primary" style="margin-top:20px;color:#fff;padding:10px 28px;">
+            <i class="bi bi-chat-dots"></i> 立即提交意向
+        </a>
+    </div>
+</section>
+{% endblock %}

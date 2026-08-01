@@ -1,0 +1,280 @@
+{% extends "admin_base.html" %}
+{% block title %}采购需求管理 — 益阳招商后台{% endblock %}
+{% block page_title %}采购需求管理{% endblock %}
+
+{% block content %}
+<!-- 筛选栏 -->
+<div class="filter-bar">
+    <a href="/admin/demands" class="btn btn-sm {{ 'btn-primary' if not current_track and not current_demand_type else 'btn-outline' }}">全部</a>
+    {% for t in tracks %}
+    <a href="/admin/demands?track={{ t }}" class="btn btn-sm {{ 'btn-primary' if current_track==t else 'btn-outline' }}">{{ t }}</a>
+    {% endfor %}
+    {% for dt in demand_types %}
+    <a href="/admin/demands?demand_type={{ dt }}" class="btn btn-sm {{ 'btn-primary' if current_demand_type==dt else 'btn-outline' }}">{{ dt }}</a>
+    {% endfor %}
+    <span style="flex:1;"></span>
+    <button class="btn btn-primary btn-sm" onclick="resetForm(); showModal('demandModal')">
+        <i class="bi bi-plus-lg"></i> 新增需求
+    </button>
+</div>
+
+<!-- 需求表格 -->
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>发布企业</th>
+            <th>类型</th>
+            <th>品类</th>
+            <th>赛道</th>
+            <th>预估金额</th>
+            <th>截止日期</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in demands %}
+        <tr>
+            <td style="max-width:240px;">
+                <strong class="truncate" style="font-size:13px;display:block;">{{ d.title }}</strong>
+            </td>
+            <td><span class="small">{{ d.chain_company.name if d.chain_company else '-' }}</span></td>
+            <td>
+                <span class="badge {{ 'badge-success' if d.demand_type=='年度采购' else 'badge-danger' if d.demand_type=='紧急采购' else 'badge-primary' }}">{{ d.demand_type }}</span>
+            </td>
+            <td><span class="small">{{ d.category or '-' }}</span></td>
+            <td>
+                <span class="badge badge-track-{{ 'sense' if d.industry_track=='智能感知' else 'vision' if d.industry_track=='工业视觉' else 'equip' if d.industry_track=='装备智能' else 'compute' if d.industry_track=='算力配套' else 'neutral' }}" style="font-size:11px;">{{ d.industry_track or '-' }}</span>
+            </td>
+            <td><span class="small">{{ d.amount_estimate or '-' }}</span></td>
+            <td class="nowrap"><span class="small">{{ d.deadline or '-' }}</span></td>
+            <td>
+                <span class="badge {{ 'badge-success' if d.status=='open' else 'badge-neutral' }}">
+                    {{ '招募中' if d.status=='open' else '已截止' }}
+                </span>
+            </td>
+            <td class="nowrap">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-xs btn-outline" onclick="editDemand({{ d.id }})" title="编辑">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-xs btn-outline" onclick="deleteDemand({{ d.id }}, '{{ d.title | replace("'", "\\'") }}')" title="删除"
+                            style="color:var(--error);">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center" style="padding:40px;color:var(--text-tertiary);">暂无采购需求</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="demandModal">
+<div class="modal-backdrop" onclick="hideModal('demandModal')"></div>
+<div class="modal-dialog" style="max-width:700px;">
+    <div class="modal-header">
+        <h5 id="modalTitle">新增采购需求</h5>
+        <button class="modal-close" onclick="hideModal('demandModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="demandId">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">发布企业 <span class="text-danger">*</span></label>
+                    <select class="form-control" id="chainCompanyId">
+                        <option value="">-- 选择链主企业 --</option>
+                        {% for c in chain_leaders %}
+                        <option value="{{ c.id }}">{{ c.name }} ({{ c.industry_track or '未分类' }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">需求类型</label>
+                    <select class="form-control" id="demandType">
+                        {% for dt in demand_types %}
+                        <option value="{{ dt }}">{{ dt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">标题 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="demandTitle" placeholder="如：2026年度光学器件供应商招募">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">品类</label>
+                    <select class="form-control" id="demandCategory">
+                        <option value="">-- 选择品类 --</option>
+                        <option value="原材料">原材料</option>
+                        <option value="零部件">零部件</option>
+                        <option value="设备">设备</option>
+                        <option value="软件">软件</option>
+                        <option value="服务">服务</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">赛道</label>
+                    <select class="form-control" id="demandTrack">
+                        <option value="">-- 选择赛道 --</option>
+                        {% for t in tracks %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-control" id="demandStatus">
+                        <option value="open">招募中</option>
+                        <option value="closed">已截止</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">预估采购金额</label>
+                    <input type="text" class="form-control" id="demandAmount" placeholder="如：500万元/年">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">采购数量</label>
+                    <input type="text" class="form-control" id="demandQuantity" placeholder="如：10万件/年">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">报名截止日期</label>
+                    <input type="date" class="form-control" id="demandDeadline">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">发布日期</label>
+                    <input type="date" class="form-control" id="demandPublishedAt">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label class="form-label">对接联系方式</label>
+                    <input type="text" class="form-control" id="demandContact" placeholder="如：张经理 0737-XXXXXXX">
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">需求详细描述</label>
+                    <textarea class="form-control" id="demandDescription" rows="4" placeholder="详细描述采购需求、技术参数、交付要求等..."></textarea>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">供应商资质要求</label>
+                    <textarea class="form-control" id="demandRequirements" rows="3" placeholder="如：ISO9001认证、注册资本500万以上、有同类产品供货经验..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" onclick="hideModal('demandModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveDemand()">保存</button>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var demands = {{ demands_json | tojson | safe }};
+
+function resetForm() {
+    document.getElementById('modalTitle').textContent = '新增采购需求';
+    document.getElementById('demandId').value = '';
+    ['chainCompanyId', 'demandType', 'demandCategory', 'demandTrack',
+     'demandTitle', 'demandAmount', 'demandQuantity', 'demandDeadline', 'demandPublishedAt',
+     'demandContact', 'demandDescription', 'demandRequirements'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('demandStatus').value = 'open';
+    document.getElementById('demandType').value = '供应商招募';
+}
+
+function editDemand(id) {
+    var d = demands.find(function(x) { return x.id === id; });
+    if (!d) return;
+    document.getElementById('modalTitle').textContent = '编辑采购需求';
+    document.getElementById('demandId').value = d.id;
+    document.getElementById('chainCompanyId').value = d.chain_company_id || '';
+    document.getElementById('demandType').value = d.demand_type || '供应商招募';
+    document.getElementById('demandCategory').value = d.category || '';
+    document.getElementById('demandTrack').value = d.industry_track || '';
+    document.getElementById('demandStatus').value = d.status || 'open';
+    document.getElementById('demandTitle').value = d.title || '';
+    document.getElementById('demandAmount').value = d.amount_estimate || '';
+    document.getElementById('demandQuantity').value = d.quantity_desc || '';
+    document.getElementById('demandDeadline').value = d.deadline || '';
+    document.getElementById('demandPublishedAt').value = d.published_at || '';
+    document.getElementById('demandContact').value = d.contact_info || '';
+    document.getElementById('demandDescription').value = d.description || '';
+    document.getElementById('demandRequirements').value = d.requirements || '';
+    showModal('demandModal');
+}
+
+async function saveDemand() {
+    var id = document.getElementById('demandId').value;
+    var data = {
+        chain_company_id: parseInt(document.getElementById('chainCompanyId').value) || null,
+        title: document.getElementById('demandTitle').value.trim(),
+        category: document.getElementById('demandCategory').value,
+        demand_type: document.getElementById('demandType').value,
+        amount_estimate: document.getElementById('demandAmount').value.trim(),
+        quantity_desc: document.getElementById('demandQuantity').value.trim(),
+        deadline: document.getElementById('demandDeadline').value,
+        requirements: document.getElementById('demandRequirements').value.trim(),
+        description: document.getElementById('demandDescription').value.trim(),
+        contact_info: document.getElementById('demandContact').value.trim(),
+        industry_track: document.getElementById('demandTrack').value,
+        published_at: document.getElementById('demandPublishedAt').value,
+        status: document.getElementById('demandStatus').value,
+    };
+    if (!data.chain_company_id || !data.title) {
+        alert('请填写发布企业和标题');
+        return;
+    }
+    var url = id ? '/api/demands/' + id : '/api/demands';
+    var method = id ? 'PUT' : 'POST';
+    var r = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    var j = await r.json();
+    if (j.ok) {
+        location.reload();
+    } else {
+        alert(j.msg || '操作失败');
+    }
+}
+
+async function deleteDemand(id, title) {
+    if (!confirm('确定删除需求 "' + title + '" 吗？此操作不可撤销。')) return;
+    var r = await fetch('/api/demands/' + id, { method: 'DELETE' });
+    var j = await r.json();
+    if (j.ok) {
+        location.reload();
+    } else {
+        alert(j.msg || '删除失败');
+    }
+}
+</script>
+{% endblock %}

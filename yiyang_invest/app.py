@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import get_config, UploadConfig
-from models import db, User, ParkInfo, IndustryChain, Company, Lead, Project, FollowUp, Space, Policy, Article, BiddingRecord, ParkImage
+from models import db, User, ParkInfo, IndustryChain, Company, Lead, Project, FollowUp, Space, Policy, Article, BiddingRecord, ParkImage, ProcurementDemand, DemandResponse, TechCapability
 from auth import login_required, role_required, get_current_user
 
 
@@ -235,6 +235,205 @@ def public_contact():
         return redirect(url_for('public_contact'))
 
     return render_template('public/contact.html')
+
+
+# ==================== 上游供应商专区 ====================
+@app.route('/supplier-zone')
+def public_supplier_zone():
+    """上游供应商专区 — 链主采购需求发布板"""
+    track = request.args.get('track', '')
+    demand_type = request.args.get('demand_type', '')
+    status = request.args.get('status', 'open')
+
+    query = ProcurementDemand.query
+    if track:
+        query = query.filter_by(industry_track=track)
+    if demand_type:
+        query = query.filter_by(demand_type=demand_type)
+    if status:
+        query = query.filter_by(status=status)
+
+    demands = query.order_by(ProcurementDemand.published_at.desc()).all()
+    chain_leaders = Company.query.filter_by(is_chain_leader=True, status='active').all()
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    demand_types = ['年度采购', '紧急采购', '供应商招募']
+
+    return render_template('public/supplier_zone.html',
+                           demands=demands, chain_leaders=chain_leaders,
+                           tracks=tracks, demand_types=demand_types,
+                           current_track=track, current_demand_type=demand_type,
+                           current_status=status)
+
+
+@app.route('/supplier-zone/demand/<int:demand_id>')
+def public_demand_detail(demand_id):
+    """采购需求详情页"""
+    demand = db.session.get(ProcurementDemand, demand_id)
+    if not demand:
+        return "需求不存在", 404
+
+    # 同赛道关联需求
+    related_demands = ProcurementDemand.query.filter(
+        ProcurementDemand.industry_track == demand.industry_track,
+        ProcurementDemand.id != demand.id,
+        ProcurementDemand.status == 'open'
+    ).limit(4).all()
+
+    # 同赛道入驻企业（潜在合作方）
+    related_companies = Company.query.filter(
+        Company.industry_track == demand.industry_track,
+        Company.company_type == 'settled',
+        Company.status == 'active'
+    ).limit(6).all()
+
+    return render_template('public/demand_detail.html',
+                           demand=demand,
+                           related_demands=related_demands,
+                           related_companies=related_companies)
+
+
+@app.route('/api/public/demands')
+def api_public_demands():
+    """公开API：采购需求列表"""
+    demands = ProcurementDemand.query.filter_by(status='open').order_by(
+        ProcurementDemand.published_at.desc()).all()
+    return jsonify({'ok': True, 'demands': [d.to_dict() for d in demands]})
+
+
+# ------ 供应商响应 ------
+@app.route('/api/demands/<int:demand_id>/respond', methods=['POST'])
+def api_demand_respond(demand_id):
+    """供应商在线提交对接意向（公开接口，无需登录）"""
+    demand = db.session.get(ProcurementDemand, demand_id)
+    if not demand:
+        return jsonify({'ok': False, 'msg': '需求不存在'}), 404
+    data = request.get_json() or {}
+    if not data.get('company_name', '').strip():
+        return jsonify({'ok': False, 'msg': '请填写企业名称'}), 400
+    resp = DemandResponse(
+        demand_id=demand_id,
+        company_name=data.get('company_name', '').strip(),
+        contact_person=data.get('contact_person', '').strip(),
+        contact_phone=data.get('contact_phone', '').strip(),
+        contact_email=data.get('contact_email', '').strip(),
+        qualification_desc=data.get('qualification_desc', '').strip(),
+        advantage_desc=data.get('advantage_desc', '').strip(),
+    )
+    db.session.add(resp)
+    db.session.commit()
+    return jsonify({'ok': True, 'msg': '您的对接意向已提交成功！招商团队将在1-3个工作日内与您联系。'})
+
+
+@app.route('/api/demands/<int:demand_id>/responses')
+@login_required
+def api_demand_responses(demand_id):
+    """查看某需求的响应列表"""
+    responses = DemandResponse.query.filter_by(demand_id=demand_id)\
+        .order_by(DemandResponse.created_at.desc()).all()
+    return jsonify({'ok': True, 'responses': [r.to_dict() for r in responses]})
+
+
+@app.route('/api/responses/<int:response_id>', methods=['PUT'])
+@login_required
+def api_response_update(response_id):
+    """更新响应状态"""
+    resp = db.session.get(DemandResponse, response_id)
+    if not resp:
+        return jsonify({'ok': False, 'msg': '不存在'}), 404
+    data = request.get_json() or {}
+    if 'status' in data:
+        resp.status = data['status']
+    if 'review_notes' in data:
+        resp.review_notes = data['review_notes']
+    if resp.status in ('approved', 'rejected'):
+        resp.reviewed_at = datetime.utcnow().strftime('%Y-%m-%d')
+    db.session.commit()
+    return jsonify({'ok': True, 'response': resp.to_dict()})
+
+
+# ==================== 下游应用商专区 ====================
+@app.route('/downstream-zone')
+def public_downstream_zone():
+    """下游应用商专区 — 链主企业技术/产品能力展示"""
+    track = request.args.get('track', '')
+    cap_type = request.args.get('cap_type', '')
+    query = TechCapability.query.filter_by(status='open')
+    if track:
+        query = query.filter_by(industry_track=track)
+    if cap_type:
+        query = query.filter_by(capability_type=cap_type)
+    capabilities = query.order_by(TechCapability.published_at.desc()).all()
+    chain_leaders = Company.query.filter_by(is_chain_leader=True, status='active').all()
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    cap_types = ['算力服务', '产线测试', '技术合作', '产品供应', '联合研发']
+    return render_template('public/downstream_zone.html',
+                           capabilities=capabilities, chain_leaders=chain_leaders,
+                           tracks=tracks, cap_types=cap_types,
+                           current_track=track, current_cap_type=cap_type)
+
+
+@app.route('/admin/tech-capabilities')
+@login_required
+def admin_tech_capabilities():
+    """后台：技术能力管理"""
+    capabilities = TechCapability.query.order_by(TechCapability.created_at.desc()).all()
+    capabilities_json = [c.to_dict() for c in capabilities]
+    chain_leaders = Company.query.filter_by(is_chain_leader=True).all()
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    cap_types = ['算力服务', '产线测试', '技术合作', '产品供应', '联合研发']
+    return render_template('admin/tech_capabilities.html',
+                           capabilities=capabilities, capabilities_json=capabilities_json,
+                           chain_leaders=chain_leaders,
+                           tracks=tracks, cap_types=cap_types)
+
+
+@app.route('/api/tech-capabilities', methods=['POST'])
+@login_required
+def api_tech_capability_add():
+    data = request.get_json() or {}
+    cap = TechCapability(
+        chain_company_id=data.get('chain_company_id'),
+        title=data.get('title', ''),
+        capability_type=data.get('capability_type', '技术合作'),
+        description=data.get('description', ''),
+        applicable_scenarios=data.get('applicable_scenarios', ''),
+        contact_info=data.get('contact_info', ''),
+        industry_track=data.get('industry_track', ''),
+        published_at=data.get('published_at', ''),
+        status=data.get('status', 'open'),
+    )
+    db.session.add(cap)
+    db.session.commit()
+    return jsonify({'ok': True, 'capability': cap.to_dict()})
+
+
+@app.route('/api/tech-capabilities/<int:cap_id>', methods=['PUT'])
+@login_required
+def api_tech_capability_update(cap_id):
+    cap = db.session.get(TechCapability, cap_id)
+    if not cap:
+        return jsonify({'ok': False, 'msg': '不存在'}), 404
+    data = request.get_json() or {}
+    for k in ['title', 'capability_type', 'description', 'applicable_scenarios',
+              'contact_info', 'industry_track', 'published_at', 'status']:
+        if k in data:
+            setattr(cap, k, data[k])
+    if 'chain_company_id' in data:
+        cap.chain_company_id = data['chain_company_id']
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/tech-capabilities/<int:cap_id>', methods=['DELETE'])
+@login_required
+@role_required('admin', 'manager')
+def api_tech_capability_delete(cap_id):
+    cap = db.session.get(TechCapability, cap_id)
+    if not cap:
+        return jsonify({'ok': False, 'msg': '不存在'}), 404
+    db.session.delete(cap)
+    db.session.commit()
+    return jsonify({'ok': True})
 
 
 # ==================== 管理后台 ====================
@@ -610,6 +809,7 @@ def api_article_add():
         summary=data.get('summary', ''),
         content=data.get('content', ''),
         cover_image=data.get('cover_image', ''),
+        source_url=data.get('source_url', ''),
         is_published=data.get('is_published', False),
         publish_date=data.get('publish_date', datetime.utcnow().strftime('%Y-%m-%d')),
     )
@@ -625,7 +825,7 @@ def api_article_update(article_id):
     article = Article.query.get_or_404(article_id)
     data = request.get_json() or {}
     for k in ['title', 'category', 'summary', 'content', 'cover_image',
-              'is_published', 'publish_date']:
+              'source_url', 'is_published', 'publish_date']:
         if k in data:
             setattr(article, k, data[k])
     db.session.commit()
@@ -638,6 +838,87 @@ def api_article_update(article_id):
 @role_required('admin', 'manager')
 def admin_park_images():
     return render_template('admin/park_images.html')
+
+
+# ==================== 采购需求管理 ====================
+@app.route('/admin/demands')
+@login_required
+def admin_demands():
+    """链主采购需求管理"""
+    track = request.args.get('track', '')
+    demand_type = request.args.get('demand_type', '')
+    query = ProcurementDemand.query
+    if track:
+        query = query.filter_by(industry_track=track)
+    if demand_type:
+        query = query.filter_by(demand_type=demand_type)
+    demands = query.order_by(ProcurementDemand.created_at.desc()).all()
+    demands_json = [d.to_dict() for d in demands]
+    chain_leaders = Company.query.filter_by(is_chain_leader=True).all()
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    demand_types = ['年度采购', '紧急采购', '供应商招募']
+    return render_template('admin/demands.html',
+                           demands=demands, demands_json=demands_json,
+                           chain_leaders=chain_leaders,
+                           tracks=tracks, demand_types=demand_types,
+                           current_track=track, current_demand_type=demand_type)
+
+
+@app.route('/api/demands', methods=['POST'])
+@login_required
+def api_demand_add():
+    """新增采购需求"""
+    data = request.get_json() or {}
+    demand = ProcurementDemand(
+        chain_company_id=data.get('chain_company_id'),
+        title=data.get('title', ''),
+        category=data.get('category', ''),
+        demand_type=data.get('demand_type', '供应商招募'),
+        amount_estimate=data.get('amount_estimate', ''),
+        quantity_desc=data.get('quantity_desc', ''),
+        deadline=data.get('deadline', ''),
+        requirements=data.get('requirements', ''),
+        description=data.get('description', ''),
+        contact_info=data.get('contact_info', ''),
+        industry_track=data.get('industry_track', ''),
+        published_at=data.get('published_at', ''),
+        status=data.get('status', 'open'),
+    )
+    db.session.add(demand)
+    db.session.commit()
+    return jsonify({'ok': True, 'demand': demand.to_dict()})
+
+
+@app.route('/api/demands/<int:demand_id>', methods=['PUT'])
+@login_required
+def api_demand_update(demand_id):
+    """更新采购需求"""
+    demand = db.session.get(ProcurementDemand, demand_id)
+    if not demand:
+        return jsonify({'ok': False, 'msg': '需求不存在'}), 404
+    data = request.get_json() or {}
+    for k in ['title', 'category', 'demand_type', 'amount_estimate', 'quantity_desc',
+              'deadline', 'requirements', 'description', 'contact_info',
+              'industry_track', 'published_at', 'status']:
+        if k in data:
+            setattr(demand, k, data[k])
+    if 'chain_company_id' in data:
+        demand.chain_company_id = data['chain_company_id']
+    db.session.commit()
+    return jsonify({'ok': True, 'demand': demand.to_dict()})
+
+
+@app.route('/api/demands/<int:demand_id>', methods=['DELETE'])
+@login_required
+@role_required('admin', 'manager')
+def api_demand_delete(demand_id):
+    """删除采购需求"""
+    demand = db.session.get(ProcurementDemand, demand_id)
+    if not demand:
+        return jsonify({'ok': False, 'msg': '需求不存在'}), 404
+    db.session.delete(demand)
+    db.session.commit()
+    return jsonify({'ok': True})
 
 
 # ==================== 用户管理 ====================

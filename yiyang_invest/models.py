@@ -104,9 +104,11 @@ class Company(db.Model):
     description = db.Column(db.Text)
     tianyancha_id = db.Column(db.String(50))       # 天眼查企业ID
     status = db.Column(db.String(20), default='active')  # active/inactive
+    is_chain_leader = db.Column(db.Boolean, default=False)  # 是否链主企业
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     projects = db.relationship('Project', backref='company', lazy='dynamic')
+    demands = db.relationship('ProcurementDemand', backref='chain_company', lazy='dynamic')
 
     def to_dict(self):
         d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -235,6 +237,7 @@ class Article(db.Model):
     summary = db.Column(db.Text)
     content = db.Column(db.Text)
     cover_image = db.Column(db.String(300))
+    source_url = db.Column(db.String(500))            # 原文链接
     is_published = db.Column(db.Boolean, default=False)
     publish_date = db.Column(db.String(20))
     view_count = db.Column(db.Integer, default=0)
@@ -259,6 +262,82 @@ class BiddingRecord(db.Model):
     source_url = db.Column(db.String(500))
     industry_track = db.Column(db.String(30))        # 匹配的赛道
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ==================== 链主采购需求 ====================
+class ProcurementDemand(db.Model):
+    """链主企业发布的采购需求 / 供应商招募"""
+    __tablename__ = 'yy_procurement_demands'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    chain_company_id = db.Column(db.Integer, db.ForeignKey('yy_companies.id'), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
+    category = db.Column(db.String(50))              # 原材料/零部件/设备/软件/服务
+    demand_type = db.Column(db.String(30), default='供应商招募')  # 年度采购/紧急采购/供应商招募
+    amount_estimate = db.Column(db.String(100))      # 预估采购金额
+    quantity_desc = db.Column(db.String(200))        # 采购数量描述
+    deadline = db.Column(db.String(20))              # 报名截止日期
+    requirements = db.Column(db.Text)                # 供应商资质要求
+    description = db.Column(db.Text)                 # 需求详细描述
+    contact_info = db.Column(db.String(200))         # 对接人联系方式
+    industry_track = db.Column(db.String(30))        # 关联赛道
+    status = db.Column(db.String(20), default='open')  # open/closed
+    published_at = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['chain_company_name'] = self.chain_company.name if self.chain_company else ''
+        d['chain_company_track'] = self.chain_company.industry_track if self.chain_company else ''
+        return d
+
+
+# ==================== 采购需求响应 ====================
+class DemandResponse(db.Model):
+    """供应商对采购需求的响应/报名"""
+    __tablename__ = 'yy_demand_responses'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    demand_id = db.Column(db.Integer, db.ForeignKey('yy_procurement_demands.id'), nullable=False)
+    company_name = db.Column(db.String(200), nullable=False)
+    contact_person = db.Column(db.String(50))
+    contact_phone = db.Column(db.String(30))
+    contact_email = db.Column(db.String(100))
+    qualification_desc = db.Column(db.Text)      # 资质说明
+    advantage_desc = db.Column(db.Text)           # 优势说明
+    status = db.Column(db.String(20), default='pending')  # pending/reviewing/approved/rejected
+    reviewed_at = db.Column(db.String(20))
+    review_notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    demand = db.relationship('ProcurementDemand', backref=db.backref('responses', lazy='dynamic'))
+
+    def to_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['demand_title'] = self.demand.title if self.demand else ''
+        return d
+
+
+# ==================== 链主技术能力（下游专区） ====================
+class TechCapability(db.Model):
+    """链主企业对外开放的技术/产品/服务能力，吸引下游客户"""
+    __tablename__ = 'yy_tech_capabilities'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    chain_company_id = db.Column(db.Integer, db.ForeignKey('yy_companies.id'), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
+    capability_type = db.Column(db.String(50))    # 算力服务/产线测试/技术合作/产品供应/联合研发
+    description = db.Column(db.Text)
+    applicable_scenarios = db.Column(db.Text)     # 适用场景
+    contact_info = db.Column(db.String(200))
+    industry_track = db.Column(db.String(30))
+    status = db.Column(db.String(20), default='open')
+    published_at = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    chain_company = db.relationship('Company', backref=db.backref('tech_capabilities', lazy='dynamic'))
+
+    def to_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['chain_company_name'] = self.chain_company.name if self.chain_company else ''
+        return d
 
 
 # ==================== 园区实景图 ====================

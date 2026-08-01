@@ -1,0 +1,209 @@
+{% extends "admin_base.html" %}
+{% block title %}技术能力管理 — 益阳招商后台{% endblock %}
+{% block page_title %}技术能力管理{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <span class="small text-secondary">链主企业对下游开放的技术能力和合作资源管理</span>
+    <span style="flex:1;"></span>
+    <button class="btn btn-primary btn-sm" onclick="resetForm(); showModal('capModal')">
+        <i class="bi bi-plus-lg"></i> 新增能力
+    </button>
+</div>
+
+<div class="table-wrap">
+<table class="table">
+    <thead>
+        <tr>
+            <th>标题</th>
+            <th>链主企业</th>
+            <th>类型</th>
+            <th>赛道</th>
+            <th>发布日期</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in capabilities %}
+        <tr>
+            <td><strong class="truncate" style="font-size:13px;display:block;">{{ c.title }}</strong></td>
+            <td><span class="small">{{ c.chain_company.name if c.chain_company else '-' }}</span></td>
+            <td><span class="badge badge-accent">{{ c.capability_type }}</span></td>
+            <td>
+                <span class="badge badge-track-{{ 'sense' if c.industry_track=='智能感知' else 'vision' if c.industry_track=='工业视觉' else 'equip' if c.industry_track=='装备智能' else 'compute' if c.industry_track=='算力配套' else 'neutral' }}" style="font-size:11px;">{{ c.industry_track or '-' }}</span>
+            </td>
+            <td class="nowrap"><span class="small">{{ c.published_at or '-' }}</span></td>
+            <td>
+                <span class="badge {{ 'badge-success' if c.status=='open' else 'badge-neutral' }}">
+                    {{ '开放中' if c.status=='open' else '已关闭' }}
+                </span>
+            </td>
+            <td class="nowrap">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-xs btn-outline" onclick="editCap({{ c.id }})" title="编辑"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-xs btn-outline" onclick="deleteCap({{ c.id }})" style="color:var(--error);" title="删除"><i class="bi bi-trash"></i></button>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center" style="padding:40px;color:var(--text-tertiary);">暂无技术能力数据</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="capModal">
+<div class="modal-backdrop" onclick="hideModal('capModal')"></div>
+<div class="modal-dialog" style="max-width:600px;">
+    <div class="modal-header">
+        <h5 id="capModalTitle">新增技术能力</h5>
+        <button class="modal-close" onclick="hideModal('capModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="capId">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">链主企业 <span class="text-danger">*</span></label>
+                    <select class="form-control" id="capChainCompanyId">
+                        <option value="">-- 选择 --</option>
+                        {% for c in chain_leaders %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">能力类型</label>
+                    <select class="form-control" id="capType">
+                        {% for ct in cap_types %}
+                        <option value="{{ ct }}">{{ ct }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">标题 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="capTitle" placeholder="如：GPU算力集群对外服务">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">赛道</label>
+                    <select class="form-control" id="capTrack">
+                        <option value="">-- 选择 --</option>
+                        {% for t in tracks %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-control" id="capStatus">
+                        <option value="open">开放中</option>
+                        <option value="closed">已关闭</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">发布日期</label>
+                    <input type="date" class="form-control" id="capPublishedAt">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">联系方式</label>
+                    <input type="text" class="form-control" id="capContact" placeholder="对接人及联系方式">
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <textarea class="form-control" id="capDescription" rows="3" placeholder="能力描述..."></textarea>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">适用场景</label>
+                    <textarea class="form-control" id="capScenarios" rows="2" placeholder="此能力适用于哪些下游应用场景..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" onclick="hideModal('capModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveCap()">保存</button>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var capabilities = {{ capabilities_json | tojson | safe }};
+
+function resetForm() {
+    document.getElementById('capModalTitle').textContent = '新增技术能力';
+    document.getElementById('capId').value = '';
+    ['capChainCompanyId','capType','capTrack','capStatus','capTitle',
+     'capPublishedAt','capContact','capDescription','capScenarios'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('capStatus').value = 'open';
+    document.getElementById('capType').value = '技术合作';
+}
+
+function editCap(id) {
+    var c = capabilities.find(function(x) { return x.id === id; });
+    if (!c) return;
+    document.getElementById('capModalTitle').textContent = '编辑技术能力';
+    document.getElementById('capId').value = c.id;
+    document.getElementById('capChainCompanyId').value = c.chain_company_id || '';
+    document.getElementById('capType').value = c.capability_type || '技术合作';
+    document.getElementById('capTrack').value = c.industry_track || '';
+    document.getElementById('capStatus').value = c.status || 'open';
+    document.getElementById('capTitle').value = c.title || '';
+    document.getElementById('capPublishedAt').value = c.published_at || '';
+    document.getElementById('capContact').value = c.contact_info || '';
+    document.getElementById('capDescription').value = c.description || '';
+    document.getElementById('capScenarios').value = c.applicable_scenarios || '';
+    showModal('capModal');
+}
+
+async function saveCap() {
+    var id = document.getElementById('capId').value;
+    var data = {
+        chain_company_id: parseInt(document.getElementById('capChainCompanyId').value) || null,
+        title: document.getElementById('capTitle').value.trim(),
+        capability_type: document.getElementById('capType').value,
+        description: document.getElementById('capDescription').value.trim(),
+        applicable_scenarios: document.getElementById('capScenarios').value.trim(),
+        contact_info: document.getElementById('capContact').value.trim(),
+        industry_track: document.getElementById('capTrack').value,
+        published_at: document.getElementById('capPublishedAt').value,
+        status: document.getElementById('capStatus').value,
+    };
+    if (!data.chain_company_id || !data.title) { alert('请填写链主企业和标题'); return; }
+    var url = id ? '/api/tech-capabilities/' + id : '/api/tech-capabilities';
+    var r = await fetch(url, {
+        method: id ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    var j = await r.json();
+    if (j.ok) { location.reload(); } else { alert(j.msg || '操作失败'); }
+}
+
+async function deleteCap(id) {
+    if (!confirm('确定删除吗？')) return;
+    var r = await fetch('/api/tech-capabilities/' + id, { method: 'DELETE' });
+    var j = await r.json();
+    if (j.ok) { location.reload(); } else { alert(j.msg || '删除失败'); }
+}
+</script>
+{% endblock %}

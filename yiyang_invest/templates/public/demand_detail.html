@@ -1,0 +1,247 @@
+{% extends "public_base.html" %}
+{% block title %}{{ demand.title }} — 采购需求详情{% endblock %}
+
+{% block content %}
+<section class="portal-section">
+    <!-- 返回 -->
+    <a href="/supplier-zone" style="display:inline-block;margin-bottom:16px;color:var(--text-secondary);text-decoration:none;font-size:13px;">
+        <i class="bi bi-arrow-left"></i> 返回供应商专区
+    </a>
+
+    <div class="grid-2" style="align-items:start;gap:24px;">
+        <!-- 左侧：需求详情 -->
+        <div>
+            <div class="card" style="border-left: 3px solid {{ 'var(--success)' if demand.demand_type=='年度采购' else 'var(--error)' if demand.demand_type=='紧急采购' else 'var(--accent)' }};">
+                <div class="card-body" style="padding:28px;">
+                    <!-- 标题 & 标签 -->
+                    <div class="d-flex gap-1 flex-wrap mb-3">
+                        <span class="badge {{ 'badge-success' if demand.demand_type=='年度采购' else 'badge-danger' if demand.demand_type=='紧急采购' else 'badge-accent' }}">{{ demand.demand_type }}</span>
+                        {% if demand.category %}<span class="badge badge-neutral">{{ demand.category }}</span>{% endif %}
+                        {% if demand.industry_track %}<span class="badge badge-neutral">{{ demand.industry_track }}</span>{% endif %}
+                        <span class="badge {{ 'badge-success' if demand.status=='open' else 'badge-neutral' }}">
+                            {{ '招募中' if demand.status=='open' else '已截止' }}
+                        </span>
+                    </div>
+                    <h4 class="fw-600" style="font-size:20px;line-height:1.4;margin-bottom:20px;">{{ demand.title }}</h4>
+
+                    <!-- 基本信息 -->
+                    <div style="margin-bottom:20px;">
+                        <p class="small fw-600" style="color:var(--text-tertiary);margin-bottom:8px;">
+                            <i class="bi bi-info-circle"></i> 基本信息
+                        </p>
+                        <div style="background:var(--surface);border-radius:8px;overflow:hidden;">
+                            <table style="width:100%;font-size:13px;">
+                                <tr>
+                                    <td style="padding:8px 12px;color:var(--text-secondary);width:120px;">发布企业</td>
+                                    <td style="padding:8px 12px;font-weight:500;">{{ demand.chain_company.name if demand.chain_company else '-' }}
+                                        {% if demand.chain_company and demand.chain_company.scale %}<span class="badge badge-neutral" style="font-size:10px;">{{ demand.chain_company.scale }}</span>{% endif %}
+                                    </td>
+                                </tr>
+                                {% if demand.amount_estimate %}
+                                <tr>
+                                    <td style="padding:8px 12px;color:var(--text-secondary);">预估采购金额</td>
+                                    <td style="padding:8px 12px;font-weight:500;color:var(--error);">{{ demand.amount_estimate }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if demand.quantity_desc %}
+                                <tr>
+                                    <td style="padding:8px 12px;color:var(--text-secondary);">采购数量</td>
+                                    <td style="padding:8px 12px;">{{ demand.quantity_desc }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if demand.deadline %}
+                                <tr>
+                                    <td style="padding:8px 12px;color:var(--text-secondary);">报名截止</td>
+                                    <td style="padding:8px 12px;font-weight:500;color:var(--error);">{{ demand.deadline }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if demand.published_at %}
+                                <tr>
+                                    <td style="padding:8px 12px;color:var(--text-secondary);">发布日期</td>
+                                    <td style="padding:8px 12px;">{{ demand.published_at }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 需求描述 -->
+                    {% if demand.description %}
+                    <div style="margin-bottom:16px;">
+                        <p class="small fw-600" style="color:var(--text-tertiary);margin-bottom:6px;">
+                            <i class="bi bi-file-text"></i> 需求描述
+                        </p>
+                        <div class="card" style="background:var(--surface);padding:16px;font-size:13px;line-height:1.8;">{{ demand.description }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- 资质要求 -->
+                    {% if demand.requirements %}
+                    <div style="margin-bottom:16px;">
+                        <p class="small fw-600" style="color:var(--text-tertiary);margin-bottom:6px;">
+                            <i class="bi bi-check2-square"></i> 供应商资质要求
+                        </p>
+                        <div class="card" style="background:#fff3cd;padding:16px;font-size:13px;line-height:1.8;">{{ demand.requirements }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- 联系方式 -->
+                    {% if demand.contact_info %}
+                    <p class="small" style="color:var(--text-secondary);"><i class="bi bi-telephone"></i> {{ demand.contact_info }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="d-flex gap-2 mt-4">
+                {% if demand.status == 'open' %}
+                <button class="btn btn-primary" style="color:#fff;" onclick="showRespondModal()">我要响应</button>
+                {% endif %}
+                <a href="/supplier-zone" class="btn btn-outline">返回列表</a>
+            </div>
+        </div>
+
+        <!-- 右侧栏 -->
+        <div>
+            <!-- 同赛道需求 -->
+            {% if related_demands %}
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-link-45deg"></i> 同赛道更多需求</div>
+                <div class="card-body" style="padding:0;">
+                    {% for rd in related_demands %}
+                    <a href="/supplier-zone/demand/{{ rd.id }}" style="display:block;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                        <div class="fw-600 small" style="margin-bottom:4px;">{{ rd.title }}</div>
+                        <div class="d-flex gap-2">
+                            <span class="small" style="color:var(--text-tertiary);">{{ rd.chain_company.name if rd.chain_company else '-' }}</span>
+                            <span class="small" style="color:var(--text-tertiary);">{{ rd.demand_type }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 同赛道入驻企业 -->
+            {% if related_companies %}
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-building"></i> {{ demand.industry_track or '相关' }}赛道入驻企业</div>
+                <div class="card-body" style="padding:0;">
+                    {% for c in related_companies %}
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                        <div class="small fw-600">{{ c.name }}</div>
+                        <div class="small" style="color:var(--text-tertiary);margin-top:2px;">
+                            {% if c.scale %}{{ c.scale }} · {% endif %}{{ c.city or '-' }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 招商热线 -->
+            <div class="card" style="background:linear-gradient(135deg, var(--accent), #1a56db);color:#fff;text-align:center;">
+                <div class="card-body" style="padding:24px;">
+                    <i class="bi bi-headset" style="font-size:28px;"></i>
+                    <h5 style="margin:8px 0 4px;">招商对接热线</h5>
+                    <p style="font-size:24px;font-weight:700;margin:4px 0;">0737-XXXXXXX</p>
+                    <p class="small" style="opacity:0.8;">工作日 9:00-18:00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 响应弹窗 -->
+<div class="modal" id="respondModal">
+<div class="modal-backdrop" onclick="hideRespondModal()"></div>
+<div class="modal-dialog" style="max-width:500px;">
+    <div class="modal-header">
+        <h5>提交对接意向</h5>
+        <button class="modal-close" onclick="hideRespondModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p class="small text-secondary mb-3">响应需求：<strong>{{ demand.title }}</strong></p>
+        <div class="form-group">
+            <label class="form-label">企业名称 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="respCompanyName" placeholder="请输入您的企业名称">
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">联系人</label>
+                    <input type="text" class="form-control" id="respContactPerson" placeholder="姓名">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label">联系电话</label>
+                    <input type="text" class="form-control" id="respContactPhone" placeholder="手机号">
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">邮箱</label>
+            <input type="email" class="form-control" id="respContactEmail" placeholder="company@example.com">
+        </div>
+        <div class="form-group">
+            <label class="form-label">资质说明</label>
+            <textarea class="form-control" id="respQualification" rows="2" placeholder="如：ISO9001认证、注册资本500万、有同类产品供货经验..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">竞争优势</label>
+            <textarea class="form-control" id="respAdvantage" rows="2" placeholder="说明贵司相比其他供应商的优势..."></textarea>
+        </div>
+        <div id="respMsg" class="mt-2" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" onclick="hideRespondModal()">取消</button>
+        <button class="btn btn-primary" id="respSubmitBtn" onclick="submitResponse()">提交</button>
+    </div>
+</div>
+</div>
+
+<script>
+function showRespondModal() {
+    ['respCompanyName','respContactPerson','respContactPhone','respContactEmail',
+     'respQualification','respAdvantage'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('respMsg').style.display = 'none';
+    document.getElementById('respondModal').classList.add('show');
+}
+function hideRespondModal() {
+    document.getElementById('respondModal').classList.remove('show');
+}
+async function submitResponse() {
+    var name = document.getElementById('respCompanyName').value.trim();
+    if (!name) { alert('请填写企业名称'); return; }
+    var btn = document.getElementById('respSubmitBtn');
+    btn.disabled = true; btn.textContent = '提交中...';
+    var data = {
+        company_name: name,
+        contact_person: document.getElementById('respContactPerson').value.trim(),
+        contact_phone: document.getElementById('respContactPhone').value.trim(),
+        contact_email: document.getElementById('respContactEmail').value.trim(),
+        qualification_desc: document.getElementById('respQualification').value.trim(),
+        advantage_desc: document.getElementById('respAdvantage').value.trim(),
+    };
+    try {
+        var r = await fetch('/api/demands/{{ demand.id }}/respond', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+        });
+        var j = await r.json();
+        var msg = document.getElementById('respMsg');
+        msg.style.display = 'block';
+        if (j.ok) {
+            msg.innerHTML = '<div class="flash-msg flash-success">'+j.msg+'</div>';
+            setTimeout(function(){ hideRespondModal(); }, 2000);
+        } else {
+            msg.innerHTML = '<div class="flash-msg flash-error">'+j.msg+'</div>';
+        }
+    } catch(e) {
+        alert('网络错误，请稍后重试');
+    }
+    btn.disabled = false; btn.textContent = '提交';
+}
+</script>
+{% endblock %}

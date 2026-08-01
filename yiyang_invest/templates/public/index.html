@@ -123,7 +123,7 @@
         {% for article in articles %}
         <div class="policy-card">
             <span class="badge badge-neutral">{{ article.category }}</span>
-            <h4 style="margin-top:8px;">{{ article.title }}</h4>
+            <h4 style="margin-top:8px;">{% if article.source_url %}<a href="{{ article.source_url }}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">{{ article.title }} <i class="bi bi-box-arrow-up-right" style="font-size:11px;color:var(--accent);"></i></a>{% else %}{{ article.title }}{% endif %}</h4>
             <p class="meta">{{ article.publish_date }}</p>
             <p class="summary">{{ article.summary }}</p>
         </div>

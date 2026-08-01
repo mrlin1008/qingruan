@@ -568,3 +568,46 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ===== 供应商专区扩展样式 ===== */
+.badge-accent { background: var(--accent); color: #fff; }
+.col-span-full { grid-column: 1 / -1; }
+.form-select { display: block; width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.ms-1 { margin-left: 4px; }
+.ms-2 { margin-left: 8px; }
+.mx-2 { margin-left: 8px; margin-right: 8px; }
+.flex-wrap { flex-wrap: wrap; }
+.align-items-start { align-items: flex-start; }
+.text-muted { color: var(--text-tertiary); }
+.text-danger { color: var(--error); }
+.row { display: flex; flex-wrap: wrap; margin: 0 -8px; }
+.col-md-2 { flex: 0 0 16.666%; max-width: 16.666%; padding: 0 8px; }
+.col-md-3 { flex: 0 0 25%; max-width: 25%; padding: 0 8px; }
+.col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 8px; }
+.col-md-6 { flex: 0 0 50%; max-width: 50%; padding: 0 8px; }
+.col-md-8 { flex: 0 0 66.666%; max-width: 66.666%; padding: 0 8px; }
+.col-12 { flex: 0 0 100%; max-width: 100%; padding: 0 8px; }
+@media (max-width: 768px) {
+  .col-md-2, .col-md-3, .col-md-4, .col-md-6, .col-md-8 { flex: 0 0 100%; max-width: 100%; }
+}
+.border-bottom { border-bottom: 1px solid var(--border); }
+.rounded { border-radius: 8px; }
+.p-2 { padding: 8px; }
+.p-3 { padding: 12px; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.text-start { text-align: left; }
+.text-end { text-align: right; }
+.text-nowrap { white-space: nowrap; }
+.fw-medium { font-weight: 500; }
+.fw-bold { font-weight: 700; }
+.fs-6 { font-size: 14px; }
+.w-100 { width: 100%; }
+.border { border: 1px solid var(--border); }
+.border-start { border-left: 3px solid var(--accent); }
+.table-light { background: #f8f9fa; }
+.table-hover tbody tr:hover { background: #f5f7fa; }
+.pe-0 { padding-right: 0; }
+.ps-0 { padding-left: 0; }
+.pb-0 { padding-bottom: 0; }
+.pt-0 { padding-top: 0; }

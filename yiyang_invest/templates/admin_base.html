@@ -36,6 +36,12 @@
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-label">资源管理</div>
+                <a href="/admin/demands" class="sidebar-link {{ 'active' if request.path.startswith('/admin/demands') }}">
+                    <i class="bi bi-megaphone icon"></i> 采购需求
+                </a>
+                <a href="/admin/tech-capabilities" class="sidebar-link {{ 'active' if request.path.startswith('/admin/tech-capabilities') }}">
+                    <i class="bi bi-cpu icon"></i> 技术能力
+                </a>
                 <a href="/admin/spaces" class="sidebar-link {{ 'active' if request.path.startswith('/admin/spaces') }}">
                     <i class="bi bi-grid-3x3-gap icon"></i> 空间管理
                 </a>
