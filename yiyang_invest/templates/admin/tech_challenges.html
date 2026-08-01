@@ -1,0 +1,58 @@
+{% extends "admin_base.html" %}
+{% block title %}技术攻关管理 — 益阳招商后台{% endblock %}
+{% block page_title %}技术攻关悬赏管理{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <span class="small text-secondary">链主企业发布的技术难题悬赏管理</span>
+    <span style="flex:1;"></span>
+    <button class="btn btn-primary btn-sm" onclick="resetForm(); showModal('challengeModal')"><i class="bi bi-plus-lg"></i> 新增悬赏</button>
+</div>
+<div class="table-wrap">
+<table class="table">
+    <thead><tr><th>标题</th><th>链主</th><th>类型</th><th>悬赏</th><th>赛道</th><th>截止</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>{% for c in challenges %}<tr>
+        <td><strong class="truncate" style="font-size:13px;display:block;">{{ c.title }}</strong></td>
+        <td><small>{{ c.chain_company.name if c.chain_company else '-' }}</small></td>
+        <td><span class="badge badge-warning">{{ c.challenge_type }}</span></td>
+        <td><small>{{ c.reward or '-' }}</small></td>
+        <td><span class="badge badge-track-{{ 'sense' if c.industry_track=='智能感知' else 'vision' if c.industry_track=='工业视觉' else 'equip' if c.industry_track=='装备智能' else 'compute' if c.industry_track=='算力配套' else 'neutral' }}" style="font-size:11px;">{{ c.industry_track or '-' }}</span></td>
+        <td class="nowrap"><small>{{ c.deadline or '-' }}</small></td>
+        <td><span class="badge {{ 'badge-success' if c.status=='open' else 'badge-info' if c.status=='in_progress' else 'badge-neutral' }}">{{ '进行中' if c.status=='in_progress' else '招募中' if c.status=='open' else '已完成' }}</span></td>
+        <td class="nowrap"><div class="d-flex gap-1">
+            <button class="btn btn-xs btn-outline" onclick="editChallenge({{ c.id }})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-xs btn-outline" onclick="del({{ c.id }})" style="color:var(--error);"><i class="bi bi-trash"></i></button>
+        </div></td>
+    </tr>{% else %}<tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-tertiary);">暂无悬赏</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="modal" id="challengeModal"><div class="modal-backdrop" onclick="hideModal('challengeModal')"></div><div class="modal-dialog" style="max-width:600px;">
+    <div class="modal-header"><h5 id="mTitle">新增悬赏</h5><button class="modal-close" onclick="hideModal('challengeModal')">&times;</button></div>
+    <div class="modal-body">
+        <input type="hidden" id="cid">
+        <div class="row">
+            <div class="col-md-6"><div class="form-group"><label class="form-label">链主<span class="text-danger">*</span></label><select class="form-control" id="chainId">{% for c in chain_leaders %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div></div>
+            <div class="col-md-6"><div class="form-group"><label class="form-label">类型</label><select class="form-control" id="ctype">{% for ct in challenge_types %}<option value="{{ ct }}">{{ ct }}</option>{% endfor %}</select></div></div>
+            <div class="col-12"><div class="form-group"><label class="form-label">标题<span class="text-danger">*</span></label><input class="form-control" id="ctitle"></div></div>
+            <div class="col-md-4"><div class="form-group"><label class="form-label">悬赏金额</label><input class="form-control" id="creward" placeholder="如：50万元"></div></div>
+            <div class="col-md-4"><div class="form-group"><label class="form-label">截止日期</label><input type="date" class="form-control" id="cdeadline"></div></div>
+            <div class="col-md-4"><div class="form-group"><label class="form-label">赛道</label><select class="form-control" id="ctrack"><option value="">--</option>{% for t in tracks %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select></div></div>
+            <div class="col-md-6"><div class="form-group"><label class="form-label">发布日期</label><input type="date" class="form-control" id="cpubdate"></div></div>
+            <div class="col-md-6"><div class="form-group"><label class="form-label">状态</label><select class="form-control" id="cstatus"><option value="open">招募中</option><option value="in_progress">进行中</option><option value="resolved">已完成</option></select></div></div>
+            <div class="col-md-6"><div class="form-group"><label class="form-label">联系方式</label><input class="form-control" id="ccontact"></div></div>
+            <div class="col-12"><div class="form-group"><label class="form-label">描述</label><textarea class="form-control" id="cdesc" rows="3"></textarea></div></div>
+            <div class="col-12"><div class="form-group"><label class="form-label">揭榜要求</label><textarea class="form-control" id="creq" rows="2"></textarea></div></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal('challengeModal')">取消</button><button class="btn btn-primary" onclick="save()">保存</button></div>
+</div></div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+var list={{ challenges_json|tojson|safe }};
+function resetForm(){document.getElementById('mTitle').textContent='新增悬赏';document.getElementById('cid').value='';['chainId','ctype','ctitle','creward','cdeadline','ctrack','cstatus','cpubdate','ccontact','cdesc','creq'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('cstatus').value='open';document.getElementById('ctype').value='技术难题';}
+function editChallenge(id){var c=list.find(function(x){return x.id===id});if(!c)return;document.getElementById('mTitle').textContent='编辑悬赏';document.getElementById('cid').value=c.id;document.getElementById('chainId').value=c.chain_company_id||'';document.getElementById('ctype').value=c.challenge_type||'技术难题';document.getElementById('ctitle').value=c.title||'';document.getElementById('creward').value=c.reward||'';document.getElementById('cdeadline').value=c.deadline||'';document.getElementById('ctrack').value=c.industry_track||'';document.getElementById('cstatus').value=c.status||'open';document.getElementById('cpubdate').value=c.published_at||'';document.getElementById('ccontact').value=c.contact_info||'';document.getElementById('cdesc').value=c.description||'';document.getElementById('creq').value=c.requirements||'';showModal('challengeModal');}
+async function save(){var id=document.getElementById('cid').value;var d={chain_company_id:parseInt(document.getElementById('chainId').value)||null,title:document.getElementById('ctitle').value.trim(),challenge_type:document.getElementById('ctype').value,description:document.getElementById('cdesc').value.trim(),reward:document.getElementById('creward').value.trim(),deadline:document.getElementById('cdeadline').value,requirements:document.getElementById('creq').value.trim(),contact_info:document.getElementById('ccontact').value.trim(),industry_track:document.getElementById('ctrack').value,published_at:document.getElementById('cpubdate').value,status:document.getElementById('cstatus').value};if(!d.chain_company_id||!d.title){alert('请填写链主和标题');return;}var u=id?'/api/tech-challenges/'+id:'/api/tech-challenges';var r=await fetch(u,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});var j=await r.json();if(j.ok)location.reload();else alert(j.msg||'操作失败');}
+async function del(id){if(!confirm('确定删除？'))return;var r=await fetch('/api/tech-challenges/'+id,{method:'DELETE'});var j=await r.json();if(j.ok)location.reload();else alert(j.msg||'删除失败');}
+</script>
+{% endblock %}

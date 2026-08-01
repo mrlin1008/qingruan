@@ -5,7 +5,9 @@ import os
 import sys
 from werkzeug.security import generate_password_hash
 from app import app, db
-from models import (User, ParkInfo, IndustryChain, Company, Space, Policy, Article, ProcurementDemand, ParkImage)
+from models import (User, ParkInfo, IndustryChain, Company, Lead, Project, FollowUp,
+                    Space, Policy, Article, BiddingRecord, ProcurementDemand,
+                    DemandResponse, TechCapability, TechChallenge, ParkImage)
 
 # 四大赛道产业链节点定义
 CHAIN_DATA = [
@@ -370,6 +372,134 @@ def seed_all():
             print(f'✓ 园区实景图创建完成（{ParkImage.query.count()}张）')
         else:
             print('  园区实景图已存在，跳过')
+
+        # 8. 招商线索
+        if not Lead.query.first():
+            for l in [
+                {'company_name':'深圳华科创智','contact_person':'陈总','contact_phone':'138xxxx2001','source':'以商招商','industry_track':'智能感知','intent_level':'高','status':'对接中','assigned_to':2,'notes':'通过麓宇光电推荐，正在寻找中部地区生产基地。'},
+                {'company_name':'武汉锐科激光','contact_person':'刘经理','contact_phone':'139xxxx2002','source':'展会','industry_track':'智能感知','intent_level':'中','status':'待处理','assigned_to':3,'notes':'光博会接触，光纤激光器国内前三，有扩产计划。'},
+                {'company_name':'苏州天准科技','contact_person':'赵副总','contact_phone':'136xxxx2003','source':'网络线索','industry_track':'工业视觉','intent_level':'高','status':'对接中','assigned_to':2,'notes':'科创板上市，AI视觉检测装备龙头，已提交选址需求。'},
+                {'company_name':'汇川技术','contact_person':'王总监','contact_phone':'137xxxx2004','source':'推介会','industry_track':'装备智能','intent_level':'中','status':'对接中','assigned_to':4,'notes':'6月长沙推介会接触，对配套三一益阳工厂有明确兴趣。'},
+                {'company_name':'杭州海康机器人','contact_person':'李总','contact_phone':'135xxxx2005','source':'在线表单','industry_track':'工业视觉','intent_level':'中','status':'待处理','assigned_to':3,'notes':'关注信维电科MLCC质检设备采购机会。'},
+                {'company_name':'长沙景嘉微电子','contact_person':'周副总','contact_phone':'133xxxx2006','source':'以商招商','industry_track':'算力配套','intent_level':'低','status':'待处理','assigned_to':4,'notes':'GPU芯片设计企业，对智算中心算力有兴趣。'},
+                {'company_name':'北京格灵深瞳','contact_person':'杨总','contact_phone':'131xxxx2007','source':'网络线索','industry_track':'工业视觉','intent_level':'高','status':'已转化','assigned_to':2,'notes':'AI视觉算法头部企业，已确认意向，正在准备投资方案。'},
+                {'company_name':'广州数控','contact_person':'黄经理','contact_phone':'132xxxx2008','source':'展会','industry_track':'装备智能','intent_level':'中','status':'已关闭','assigned_to':3,'notes':'更倾向广州本地扩产，暂时搁置。'},
+            ]:
+                db.session.add(Lead(**l))
+            db.session.commit()
+            print(f'✓ 招商线索创建完成（{Lead.query.count()}条）')
+        else:
+            print('  招商线索已存在，跳过')
+
+        # 9. 招商项目
+        if not Project.query.first():
+            for p in [
+                {'title':'华科创智激光雷达光学模组项目','company_id':4,'stage':'洽谈','amount':5000,'industry_track':'智能感知','owner_id':2,'expected_date':'2026-12','notes':'拟租赁孵化区2000㎡，配套麓宇光电。'},
+                {'title':'天准科技AI视觉检测装备华中基地','stage':'签约','amount':3000,'industry_track':'工业视觉','owner_id':2,'expected_date':'2026-10','notes':'已签署意向协议，计划使用标准厂房3000㎡。'},
+                {'title':'汇川技术智能控制器生产线','company_id':1,'stage':'落地','amount':8000,'industry_track':'装备智能','owner_id':4,'expected_date':'2026-08','settled_date':'2026-08-15','notes':'已正式落地！为三一提供PLC控制器和伺服驱动。'},
+                {'title':'海康机器人湖南区域服务中心','stage':'线索','amount':2000,'industry_track':'工业视觉','owner_id':3,'expected_date':'2027-03','notes':'考虑在益阳设立区域服务中心。'},
+                {'title':'景嘉微益阳GPU研发中心','company_id':5,'stage':'洽谈','amount':1500,'industry_track':'算力配套','owner_id':4,'expected_date':'2027-06','notes':'与智算中心联合研发GPU集群管理平台。'},
+            ]:
+                db.session.add(Project(**p))
+            db.session.commit()
+            # 线索→项目关联
+            gl = Lead.query.filter_by(status='已转化').first()
+            fp = Project.query.first()
+            if gl and fp:
+                gl.converted_project_id = fp.id
+                db.session.commit()
+            print(f'✓ 招商项目创建完成（{Project.query.count()}个）')
+        else:
+            print('  招商项目已存在，跳过')
+
+        # 10. 跟进记录
+        if not FollowUp.query.first():
+            for f in [
+                {'project_id':1,'content':'与华科创智陈总视频会议，对方对益阳区位和配套很感兴趣。','next_step':'发送政策包，安排实地考察','contact_person':'陈总','follow_date':'2026-08-10','created_by':2},
+                {'project_id':1,'content':'对方CEO计划8月下旬来益阳实地考察。','next_step':'准备接待方案','contact_person':'陈总','follow_date':'2026-08-15','created_by':2},
+                {'project_id':2,'content':'完成意向协议签署！天准科技确认在益阳设立华中基地。','next_step':'对接信维电科和金博股份','contact_person':'赵副总','follow_date':'2026-08-20','created_by':2},
+                {'project_id':2,'content':'已安排天准技术团队与信维电科对接，下周产线实测。','next_step':'跟进实测结果','contact_person':'赵副总','follow_date':'2026-08-25','created_by':2},
+                {'project_id':3,'content':'汇川技术智能控制器产线正式投产！','next_step':'协助与三一签年度合同','contact_person':'王总监','follow_date':'2026-08-15','created_by':4},
+                {'project_id':3,'content':'汇川与三一首批供应合同签署，年采购额约2000万元。','next_step':'推动二期扩产','contact_person':'王总监','follow_date':'2026-08-28','created_by':4},
+                {'project_id':4,'content':'收到海康机器人在线表单，已回电初步沟通。','next_step':'发送采购需求详情','contact_person':'李总','follow_date':'2026-08-18','created_by':3},
+                {'project_id':5,'content':'与景嘉微周副总电话沟通，对GPU集群管理有兴趣。','next_step':'安排技术对接','contact_person':'周副总','follow_date':'2026-08-22','created_by':4},
+            ]:
+                db.session.add(FollowUp(**f))
+            db.session.commit()
+            print(f'✓ 跟进记录创建完成（{FollowUp.query.count()}条）')
+        else:
+            print('  跟进记录已存在，跳过')
+
+        # 11. 招投标记录
+        if not BiddingRecord.query.first():
+            for b in [
+                {'project_name':'三一重工益阳工厂2026年度工业控制器采购招标','bidder_name':'三一重工股份有限公司','winner_name':'汇川技术股份有限公司','bid_amount':2180,'publish_date':'2026-06-15','product_detail':'PLC控制器500套、运动控制器300套','source':'中国招标投标公共服务平台','industry_track':'装备智能'},
+                {'project_name':'信维电科MLCC产线AI视觉检测系统采购','bidder_name':'信维电科股份有限公司','winner_name':'苏州天准科技股份有限公司','bid_amount':860,'publish_date':'2026-07-20','product_detail':'AI视觉检测系统10套','source':'湖南招标投标监管网','industry_track':'工业视觉'},
+                {'project_name':'金博股份碳基材料智能监测系统招标','bidder_name':'金博碳素股份有限公司','winner_name':None,'bid_amount':0,'publish_date':'2026-08-10','product_detail':'5条产线智能监测系统','source':'湖南招标投标监管网','industry_track':'工业视觉'},
+                {'project_name':'益阳智算中心二期液冷散热系统采购','bidder_name':'益阳智算中心运营有限公司','winner_name':'华为数字能源技术有限公司','bid_amount':2950,'publish_date':'2026-08-15','product_detail':'液冷散热系统覆盖500机柜','source':'中央政府采购网','industry_track':'算力配套'},
+                {'project_name':'湖南省教育厅等保测评及WAF设备采购','bidder_name':'湖南省教育厅','winner_name':'长亭科技股份有限公司','bid_amount':320,'publish_date':'2026-05-20','product_detail':'等保测评服务、WAF设备采购部署','source':'湖南政府采购网','industry_track':'算力配套'},
+            ]:
+                db.session.add(BiddingRecord(**b))
+            db.session.commit()
+            print(f'✓ 招投标记录创建完成（{BiddingRecord.query.count()}条）')
+        else:
+            print('  招投标记录已存在，跳过')
+
+        # 12. 技术能力（下游专区）
+        if not TechCapability.query.first():
+            for t in [
+                {'chain_company_id':5,'title':'GPU算力集群对外服务','capability_type':'算力服务','description':'大规模GPU集群提供AI训练和推理算力，支持按需租用。相比自建GPU集群可节省70%以上成本。','applicable_scenarios':'大模型训练/微调、AI推理服务、科学计算、渲染农场','contact_info':'智算中心 赵工 0737-XXXXXXX','industry_track':'算力配套','status':'open','published_at':'2026-08-01'},
+                {'chain_company_id':5,'title':'虚拟电厂储能系统接入服务','capability_type':'产品供应','description':'全省第二家虚拟电厂已投入运营，为数据中心和制造企业提供储能系统接入和调峰服务，降低用电成本20%-30%。','applicable_scenarios':'数据中心节能、制造企业峰谷套利、新能源消纳','contact_info':'智算中心能源部 0737-XXXXXXX','industry_track':'算力配套','status':'open','published_at':'2026-08-05'},
+                {'chain_company_id':1,'title':'路面机械产线AI应用测试环境','capability_type':'产线测试','description':'三一益阳AI数字孪生工厂对外开放产线测试环境，AI方案商可在此验证视觉检测、预测性维护等方案。','applicable_scenarios':'AI视觉检测方案验证、工业软件实测、预测性维护POC','contact_info':'三一数字化部 李工 0737-XXXXXXX','industry_track':'装备智能','status':'open','published_at':'2026-08-10'},
+                {'chain_company_id':2,'title':'MLCC产线AI质检方案联合研发','capability_type':'联合研发','description':'信维电科MLCC智能质检大模型项目开放联合研发合作，提供真实产线数据和测试环境。','applicable_scenarios':'AI缺陷检测算法研发、工业大模型训练、质检标准制定','contact_info':'信维电科AI实验室 刘工 0737-XXXXXXX','industry_track':'工业视觉','status':'open','published_at':'2026-08-12'},
+                {'chain_company_id':4,'title':'光电传感器微型化封装技术合作','capability_type':'技术合作','description':'麓宇光电依托湖南未来光电技术研究院，对外开放光电传感器微型化封装技术合作。','applicable_scenarios':'可穿戴设备传感器、消费电子微型摄像头、车载激光雷达','contact_info':'麓宇光电研发部 周总监 0737-XXXXXXX','industry_track':'智能感知','status':'open','published_at':'2026-08-15'},
+            ]:
+                db.session.add(TechCapability(**t))
+            db.session.commit()
+            print(f'✓ 技术能力创建完成（{TechCapability.query.count()}条）')
+        else:
+            print('  技术能力已存在，跳过')
+
+        # 13. 供应商企业池
+        if not Company.query.filter(Company.company_type == 'supplier').first():
+            for s in [
+                {'name':'深圳华科创智','company_type':'supplier','industry_track':'智能感知','scale':'中型','city':'深圳','district':'南山区','employee_count':280,'annual_revenue':'3.5亿元','products_services':'光学镀膜材料、非球面镜片、激光雷达光学模组','certifications':'ISO9001, IATF16949, 国家级高新技术企业','advantage_tags':'车规级,光学镀膜,10年经验,华为供应商','lat':22.53,'lng':113.95,'description':'专注于精密光学元器件研发制造。','is_chain_leader':False,'status':'active'},
+                {'name':'武汉锐科激光','company_type':'target','industry_track':'智能感知','scale':'大型','city':'武汉','district':'东湖高新区','employee_count':1200,'annual_revenue':'15亿元','products_services':'光纤激光器、半导体激光器、激光加工系统','certifications':'ISO9001, ISO14001, 上市公司','advantage_tags':'上市公司,激光器龙头,国产替代','lat':30.51,'lng':114.42,'description':'国内光纤激光器龙头企业，创业板上市。','is_chain_leader':False,'status':'active'},
+                {'name':'苏州天准科技','company_type':'supplier','industry_track':'工业视觉','scale':'中型','city':'苏州','district':'工业园区','employee_count':450,'annual_revenue':'6亿元','products_services':'AI视觉检测装备、精密测量仪器','certifications':'ISO9001, 科创板上市, 国家专精特新小巨人','advantage_tags':'科创板,AI视觉,精密测量','lat':31.32,'lng':120.73,'description':'科创板上市，专注于AI视觉检测和精密测量技术。','is_chain_leader':False,'status':'active'},
+                {'name':'深圳朗视光电','company_type':'supplier','industry_track':'工业视觉','scale':'小型','city':'深圳','district':'宝安区','employee_count':120,'annual_revenue':'8000万元','products_services':'工业相机、机器视觉光源、视觉定位系统','certifications':'ISO9001, 国家级高新技术企业','advantage_tags':'工业相机,批量供货,快速交期','lat':22.57,'lng':113.87,'description':'专注于工业相机和视觉光源研发生产，年出货量超10万台。','is_chain_leader':False,'status':'active'},
+                {'name':'长沙都正生物','company_type':'target','industry_track':'算力配套','scale':'中型','city':'长沙','district':'高新区','employee_count':300,'annual_revenue':'2亿元','products_services':'AI药物研发平台、生物大数据分析','certifications':'ISO9001, GCP认证, 国家级高新技术企业','advantage_tags':'AI制药,大数据,临床试验','lat':28.22,'lng':112.89,'description':'AI驱动的新药研发企业。','is_chain_leader':False,'status':'active'},
+            ]:
+                db.session.add(Company(**s))
+            db.session.commit()
+            print(f'✓ 供应商企业创建完成（{Company.query.filter(Company.company_type.in_(["supplier","target"]), Company.is_chain_leader==False).count()}家）')
+        else:
+            print('  供应商企业已存在，跳过')
+
+        # 14. 示例响应
+        if not DemandResponse.query.first():
+            for r in [
+                {'demand_id':3,'company_name':'深圳朗视光电','contact_person':'林经理','contact_phone':'133xxxx3001','qualification_desc':'ISO9001认证，国家级高新技术企业，工业相机年出货量超10万台','advantage_desc':'2000万像素工业相机已批量供货给富士康/比亚迪，交期快、价格有竞争力','status':'pending'},
+                {'demand_id':3,'company_name':'武汉华工激光','contact_person':'谢总','contact_phone':'139xxxx3002','qualification_desc':'上市公司，激光设备行业龙头','advantage_desc':'自主研发的智能视觉定位系统可用于MLCC产线精确定位','status':'reviewing'},
+                {'demand_id':1,'company_name':'深圳汇川技术','contact_person':'王总监','contact_phone':'137xxxx2004','qualification_desc':'上市公司，伺服驱动市占率第一','advantage_desc':'已在益阳投产，可提供本地化服务和快速响应','status':'approved'},
+            ]:
+                db.session.add(DemandResponse(**r))
+            db.session.commit()
+            print(f'✓ 示例响应创建完成（{DemandResponse.query.count()}条）')
+        else:
+            print('  示例响应已存在，跳过')
+
+        # 15. 技术攻关悬赏
+        if not TechChallenge.query.first():
+            for c in [
+                {'chain_company_id':1,'title':'路面机械焊接工艺AI参数优化','challenge_type':'算法攻关','description':'三一益阳工厂焊接工序需优化工艺参数，寻求基于强化学习的参数自适应系统，将焊接合格率从92%提升至98%以上。','reward':'30万元','deadline':'2027-03-31','requirements':'需具备工业AI算法经验','contact_info':'三一数字化部 李工 0737-XXXXXXX','industry_track':'装备智能','status':'open','published_at':'2026-08-20'},
+                {'chain_company_id':2,'title':'MLCC缺陷检测小样本学习算法','challenge_type':'算法攻关','description':'MLCC器件缺陷种类多但样本量少，需小样本学习算法实现新缺陷类型快速适配。','reward':'20万元','deadline':'2027-06-30','requirements':'高校/企业均可揭榜','contact_info':'信维电科AI实验室 刘工 0737-XXXXXXX','industry_track':'工业视觉','status':'open','published_at':'2026-08-18'},
+                {'chain_company_id':5,'title':'GPU集群智能调度系统研发','challenge_type':'技术难题','description':'2000+GPU节点集群的任务调度效率优化，GPU利用率从65%提升至85%以上。','reward':'50万元','deadline':'2027-09-30','requirements':'有大规模集群调度经验','contact_info':'智算中心 赵工 0737-XXXXXXX','industry_track':'算力配套','status':'open','published_at':'2026-08-22'},
+            ]:
+                db.session.add(TechChallenge(**c))
+            db.session.commit()
+            print(f'✓ 技术悬赏创建完成（{TechChallenge.query.count()}条）')
+        else:
+            print('  技术悬赏已存在，跳过')
 
         print('\n🎉 种子数据初始化完成！')
         print('运行 python3 app.py 启动平台，访问 http://localhost:5096')

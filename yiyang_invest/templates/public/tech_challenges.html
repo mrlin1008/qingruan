@@ -1,0 +1,61 @@
+{% extends "public_base.html" %}
+{% block title %}技术攻关悬赏板 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">技术攻关悬赏板</h1>
+    <p>链主企业发布技术难题，高校/科研机构/科技企业揭榜攻关</p>
+</section>
+
+<section class="portal-section">
+    <div class="filter-bar" style="margin-bottom:20px;">
+        <a href="/tech-challenges" class="btn btn-sm {{ 'btn-primary' if not current_track and not current_type else 'btn-outline' }}">全部</a>
+        {% for t in tracks %}
+        <a href="/tech-challenges?track={{ t }}" class="btn btn-sm {{ 'btn-primary' if current_track==t else 'btn-outline' }}">{{ t }}</a>
+        {% endfor %}
+        {% for ct in challenge_types %}
+        <a href="/tech-challenges?type={{ ct }}" class="btn btn-sm {{ 'btn-primary' if current_type==ct else 'btn-outline' }}">{{ ct }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="grid-2">
+        {% for c in challenges %}
+        <div class="card" style="border-left:3px solid var(--track-equip);">
+            <div class="card-body" style="padding:20px;">
+                <div class="d-flex gap-1 flex-wrap mb-2">
+                    <span class="badge badge-warning">{{ c.challenge_type }}</span>
+                    {% if c.industry_track %}<span class="badge badge-neutral">{{ c.industry_track }}</span>{% endif %}
+                    {% if c.reward %}<span class="badge badge-danger">悬赏 {{ c.reward }}</span>{% endif %}
+                </div>
+                <h4 class="fw-600" style="font-size:15px;margin-bottom:8px;">{{ c.title }}</h4>
+                <div class="small mb-2"><i class="bi bi-building"></i> <strong>{{ c.chain_company.name if c.chain_company else '-' }}</strong></div>
+                {% if c.description %}<p class="small text-secondary" style="line-height:1.6;">{{ c.description[:120] }}{% if c.description|length>120 %}...{% endif %}</p>{% endif %}
+                <div class="d-flex gap-3 mt-3">
+                    {% if c.deadline %}<small><i class="bi bi-clock"></i> 截止 {{ c.deadline }}</small>{% endif %}
+                    {% if c.contact_info %}<small><i class="bi bi-telephone"></i> {{ c.contact_info }}</small>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center" style="padding:60px;grid-column:1/-1;color:var(--text-tertiary);">
+            <i class="bi bi-trophy" style="font-size:48px;"></i>
+            <p class="mt-2">暂无技术攻关需求</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="portal-section" style="background:var(--surface);max-width:100%;">
+    <div style="max-width:700px;margin:0 auto;text-align:center;">
+        <h2>产学研合作通道</h2>
+        <p class="section-desc">联合中南大学、湖南师范大学、湖南未来光电技术研究院等高校院所，为链主企业技术难题提供攻关力量</p>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+            <span class="badge badge-neutral" style="padding:8px 16px;">中南大学</span>
+            <span class="badge badge-neutral" style="padding:8px 16px;">湖南师范大学</span>
+            <span class="badge badge-neutral" style="padding:8px 16px;">未来光电技术研究院</span>
+            <span class="badge badge-neutral" style="padding:8px 16px;">国防科技大学</span>
+        </div>
+        <a href="/contact" class="btn btn-primary" style="margin-top:20px;color:#fff;padding:10px 28px;">提交揭榜意向</a>
+    </div>
+</section>
+{% endblock %}

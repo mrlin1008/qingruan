@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import get_config, UploadConfig
-from models import db, User, ParkInfo, IndustryChain, Company, Lead, Project, FollowUp, Space, Policy, Article, BiddingRecord, ParkImage, ProcurementDemand, DemandResponse, TechCapability
+from models import db, User, ParkInfo, IndustryChain, Company, Lead, Project, FollowUp, Space, Policy, Article, BiddingRecord, ParkImage, ProcurementDemand, DemandResponse, TechCapability, TechChallenge
 from auth import login_required, role_required, get_current_user
 
 
@@ -555,6 +555,84 @@ def api_tech_capability_delete(cap_id):
     db.session.delete(cap)
     db.session.commit()
     return jsonify({'ok': True})
+
+
+# ==================== 技术攻关悬赏板 ====================
+@app.route('/tech-challenges')
+def public_tech_challenges():
+    track = request.args.get('track', '')
+    ctype = request.args.get('type', '')
+    query = TechChallenge.query.filter_by(status='open')
+    if track: query = query.filter_by(industry_track=track)
+    if ctype: query = query.filter_by(challenge_type=ctype)
+    challenges = query.order_by(TechChallenge.published_at.desc()).all()
+    return render_template('public/tech_challenges.html',
+                           challenges=challenges,
+                           tracks=['智能感知','工业视觉','装备智能','算力配套'],
+                           challenge_types=['技术难题','工艺改进','产品研发','算法攻关'],
+                           current_track=track, current_type=ctype)
+
+
+@app.route('/admin/tech-challenges')
+@login_required
+def admin_tech_challenges():
+    challenges = TechChallenge.query.order_by(TechChallenge.created_at.desc()).all()
+    challenges_json = [c.to_dict() for c in challenges]
+    chain_leaders = Company.query.filter_by(is_chain_leader=True).all()
+    return render_template('admin/tech_challenges.html',
+                           challenges=challenges, challenges_json=challenges_json,
+                           chain_leaders=chain_leaders,
+                           tracks=['智能感知','工业视觉','装备智能','算力配套'],
+                           challenge_types=['技术难题','工艺改进','产品研发','算法攻关'])
+
+
+@app.route('/api/tech-challenges', methods=['POST'])
+@login_required
+def api_tech_challenge_add():
+    data = request.get_json() or {}
+    c = TechChallenge(
+        chain_company_id=data.get('chain_company_id'), title=data.get('title',''),
+        challenge_type=data.get('challenge_type','技术难题'), description=data.get('description',''),
+        reward=data.get('reward',''), deadline=data.get('deadline',''),
+        requirements=data.get('requirements',''), contact_info=data.get('contact_info',''),
+        industry_track=data.get('industry_track',''), status=data.get('status','open'),
+        published_at=data.get('published_at',''))
+    db.session.add(c); db.session.commit()
+    return jsonify({'ok': True, 'challenge': c.to_dict()})
+
+
+@app.route('/api/tech-challenges/<int:cid>', methods=['PUT'])
+@login_required
+def api_tech_challenge_update(cid):
+    c = db.session.get(TechChallenge, cid)
+    if not c: return jsonify({'ok':False,'msg':'不存在'}),404
+    data = request.get_json() or {}
+    for k in ['title','challenge_type','description','reward','deadline','requirements','contact_info','industry_track','published_at','status']:
+        if k in data: setattr(c, k, data[k])
+    if 'chain_company_id' in data: c.chain_company_id = data['chain_company_id']
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/tech-challenges/<int:cid>', methods=['DELETE'])
+@login_required
+@role_required('admin','manager')
+def api_tech_challenge_delete(cid):
+    c = db.session.get(TechChallenge, cid)
+    if not c: return jsonify({'ok':False,'msg':'不存在'}),404
+    db.session.delete(c); db.session.commit()
+    return jsonify({'ok': True})
+
+
+# ==================== 响应管理 ====================
+@app.route('/admin/responses')
+@login_required
+def admin_responses():
+    status = request.args.get('status', '')
+    query = DemandResponse.query
+    if status: query = query.filter_by(status=status)
+    responses = query.order_by(DemandResponse.created_at.desc()).all()
+    return render_template('admin/responses.html', responses=responses, current_status=status)
 
 
 # ==================== 管理后台 ====================

@@ -126,4 +126,63 @@
         </a>
     </div>
 </section>
+
+<!-- 物流成本计算器 -->
+<section class="portal-section">
+    <h2>供应链成本估算</h2>
+    <p class="section-desc">输入您当前的所在城市和运输量，快速估算搬迁到益阳后的年物流成本节省</p>
+    <div class="card" style="max-width:600px;margin:24px auto 0;">
+        <div class="card-body" style="padding:24px;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">当前所在城市</label>
+                        <select class="form-control" id="calcCity" onchange="calcCost()">
+                            <option value="">-- 选择 --</option>
+                            <option value="shenzhen">深圳（距益阳约800公里）</option>
+                            <option value="suzhou">苏州（距益阳约950公里）</option>
+                            <option value="wuhan">武汉（距益阳约380公里）</option>
+                            <option value="beijing">北京（距益阳约1500公里）</option>
+                            <option value="shanghai">上海（距益阳约1050公里）</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">月运输量（吨）</label>
+                        <input type="number" class="form-control" id="calcTons" placeholder="如：50" value="50" oninput="calcCost()">
+                    </div>
+                </div>
+            </div>
+            <div id="calcResult" style="display:none;margin-top:20px;background:var(--surface);padding:20px;border-radius:8px;">
+                <h5 class="fw-600" style="margin-bottom:12px;">估算结果</h5>
+                <table style="width:100%;font-size:13px;">
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">当前城市到益阳距离</td><td style="text-align:right;"><strong id="calcDist">-</strong> 公里</td></tr>
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">当前预估年物流成本</td><td style="text-align:right;color:var(--error);"><strong id="calcCurrent">-</strong> 万元/年</td></tr>
+                    <tr><td style="padding:6px 0;color:var(--text-secondary);">搬迁后预估年物流成本</td><td style="text-align:right;color:var(--success);"><strong id="calcNew">-</strong> 万元/年</td></tr>
+                    <tr style="border-top:2px solid var(--accent);"><td style="padding:8px 0;font-weight:700;">年度物流成本节省</td><td style="text-align:right;font-size:18px;font-weight:700;color:var(--accent);"><span id="calcSave">-</span> 万元/年</td></tr>
+                </table>
+                <p class="small text-secondary mt-3">* 按公路运输费0.5元/吨·公里估算，搬迁后运距缩短90%。实际费用以物流公司报价为准。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function calcCost(){
+    var dists={shenzhen:800,suzhou:950,wuhan:380,beijing:1500,shanghai:1050};
+    var city=document.getElementById('calcCity').value;
+    var tons=parseFloat(document.getElementById('calcTons').value)||0;
+    var r=document.getElementById('calcResult');
+    if(!city||!tons){r.style.display='none';return;}
+    var dist=dists[city];
+    var currentCost=dist*tons*12*0.5/10000;
+    var newCost=dist*0.1*tons*12*0.5/10000;
+    document.getElementById('calcDist').textContent=dist;
+    document.getElementById('calcCurrent').textContent=currentCost.toFixed(0);
+    document.getElementById('calcNew').textContent=newCost.toFixed(0);
+    document.getElementById('calcSave').textContent=(currentCost-newCost).toFixed(0);
+    r.style.display='block';
+}
+</script>
 {% endblock %}

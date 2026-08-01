@@ -1,0 +1,45 @@
+{% extends "admin_base.html" %}
+{% block title %}响应管理 — 益阳招商后台{% endblock %}
+{% block page_title %}供应商响应管理{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <a href="/admin/responses" class="btn btn-sm {{ 'btn-primary' if not current_status else 'btn-outline' }}">全部</a>
+    <a href="?status=pending" class="btn btn-sm {{ 'btn-primary' if current_status=='pending' else 'btn-outline' }}"><i class="bi bi-clock"></i> 待审核</a>
+    <a href="?status=reviewing" class="btn btn-sm {{ 'btn-primary' if current_status=='reviewing' else 'btn-outline' }}"><i class="bi bi-eye"></i> 审核中</a>
+    <a href="?status=approved" class="btn btn-sm {{ 'btn-primary' if current_status=='approved' else 'btn-outline' }}"><i class="bi bi-check-lg"></i> 已通过</a>
+    <a href="?status=rejected" class="btn btn-sm {{ 'btn-primary' if current_status=='rejected' else 'btn-outline' }}"><i class="bi bi-x-lg"></i> 已拒绝</a>
+</div>
+
+<div class="table-wrap">
+<table class="table">
+    <thead><tr><th>供应商</th><th>响应需求</th><th>联系人</th><th>电话</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+    <tbody>{% for r in responses %}<tr>
+        <td><strong>{{ r.company_name }}</strong></td>
+        <td><small>{{ r.demand.title[:30] if r.demand else '-' }}...</small></td>
+        <td><small>{{ r.contact_person or '-' }}</small></td>
+        <td><small>{{ r.contact_phone or '-' }}</small></td>
+        <td><span class="badge {{ 'badge-warning' if r.status=='pending' else 'badge-info' if r.status=='reviewing' else 'badge-success' if r.status=='approved' else 'badge-neutral' }}">{{ {'pending':'待审核','reviewing':'审核中','approved':'已通过','rejected':'已拒绝'}.get(r.status, r.status) }}</span></td>
+        <td class="nowrap"><small>{{ r.created_at.strftime('%m-%d %H:%M') if r.created_at else '-' }}</small></td>
+        <td class="nowrap">
+            <button class="btn btn-xs btn-outline" onclick="viewResp({{ r.id }})" title="详情"><i class="bi bi-eye"></i></button>
+            {% if r.status == 'pending' %}<button class="btn btn-xs btn-outline" onclick="updateStatus({{ r.id }},'reviewing')" style="color:var(--accent);">标记审核中</button>{% endif %}
+            {% if r.status in ('pending','reviewing') %}<button class="btn btn-xs btn-outline" onclick="updateStatus({{ r.id }},'approved')" style="color:var(--success);">通过</button><button class="btn btn-xs btn-outline" onclick="updateStatus({{ r.id }},'rejected')" style="color:var(--error);">拒绝</button>{% endif %}
+        </td>
+    </tr>{% else %}<tr><td colspan="7" class="text-center" style="padding:40px;color:var(--text-tertiary);">暂无响应记录</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+
+<div class="modal" id="respModal"><div class="modal-backdrop" onclick="hideModal('respModal')"></div><div class="modal-dialog" style="max-width:500px;">
+    <div class="modal-header"><h5>响应详情</h5><button class="modal-close" onclick="hideModal('respModal')">&times;</button></div>
+    <div class="modal-body" id="respDetail" style="font-size:13px;line-height:1.8;"></div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+var data={};
+{% for r in responses %}data[{{ r.id }}]={{ r.to_dict()|tojson|safe }};{% endfor %}
+function viewResp(id){var r=data[id];if(!r)return;var h='<p><strong>供应商：</strong>'+r.company_name+'</p>';if(r.contact_person)h+='<p><strong>联系人：</strong>'+r.contact_person+'</p>';if(r.contact_phone)h+='<p><strong>电话：</strong>'+r.contact_phone+'</p>';if(r.contact_email)h+='<p><strong>邮箱：</strong>'+r.contact_email+'</p>';h+='<hr>';h+='<p><strong>响应需求：</strong>'+r.demand_title+'</p>';if(r.qualification_desc)h+='<p><strong>资质：</strong>'+r.qualification_desc+'</p>';if(r.advantage_desc)h+='<p><strong>优势：</strong>'+r.advantage_desc+'</p>';document.getElementById('respDetail').innerHTML=h;showModal('respModal');}
+async function updateStatus(id,s){var note=prompt('审核备注（可选）：');var r=await fetch('/api/responses/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:s,review_notes:note||''})});var j=await r.json();if(j.ok)location.reload();else alert(j.msg||'操作失败');}
+</script>
+{% endblock %}

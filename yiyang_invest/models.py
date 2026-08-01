@@ -345,6 +345,32 @@ class TechCapability(db.Model):
         return d
 
 
+# ==================== 技术攻关悬赏 ====================
+class TechChallenge(db.Model):
+    """链主企业发布的技术难题悬赏，高校/科技企业揭榜"""
+    __tablename__ = 'yy_tech_challenges'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    chain_company_id = db.Column(db.Integer, db.ForeignKey('yy_companies.id'), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
+    challenge_type = db.Column(db.String(50))     # 技术难题/工艺改进/产品研发/算法攻关
+    description = db.Column(db.Text)
+    reward = db.Column(db.String(100))            # 悬赏金额
+    deadline = db.Column(db.String(20))
+    requirements = db.Column(db.Text)             # 揭榜要求
+    contact_info = db.Column(db.String(200))
+    industry_track = db.Column(db.String(30))
+    status = db.Column(db.String(20), default='open')  # open/in_progress/resolved
+    published_at = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    chain_company = db.relationship('Company', backref=db.backref('tech_challenges', lazy='dynamic'))
+
+    def to_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['chain_company_name'] = self.chain_company.name if self.chain_company else ''
+        return d
+
+
 # ==================== 园区实景图 ====================
 class ParkImage(db.Model):
     __tablename__ = 'yy_park_images'
