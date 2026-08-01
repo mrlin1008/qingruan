@@ -26,6 +26,70 @@
     </div>
 </section>
 
+<!-- 平台实时数据看板 -->
+<section class="portal-section">
+    <h2>供需撮合看板</h2>
+    <p class="section-desc">链主-供应商-下游应用商三方对接实时数据</p>
+    <div class="grid-4" style="margin-top:24px;">
+        <div class="card stat-card" style="text-align:center;padding:24px 16px;">
+            <div class="stat-value" style="font-size:32px;font-weight:700;color:var(--accent);">{{ demand_count }}</div>
+            <div class="stat-label" style="font-size:13px;color:var(--text-secondary);margin-top:4px;">招募中采购需求</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">采购总额约 {{ total_demand_amount }} 万元</div>
+        </div>
+        <div class="card stat-card" style="text-align:center;padding:24px 16px;">
+            <div class="stat-value" style="font-size:32px;font-weight:700;color:var(--success);">{{ supplier_count }}</div>
+            <div class="stat-label" style="font-size:13px;color:var(--text-secondary);margin-top:4px;">已入驻供应商</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">链主可搜索浏览</div>
+        </div>
+        <div class="card stat-card" style="text-align:center;padding:24px 16px;">
+            <div class="stat-value" style="font-size:32px;font-weight:700;color:var(--track-equip);">{{ response_count }}</div>
+            <div class="stat-label" style="font-size:13px;color:var(--text-secondary);margin-top:4px;">对接响应次数</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">供应商在线响应</div>
+        </div>
+        <div class="card stat-card" style="text-align:center;padding:24px 16px;">
+            <div class="stat-value" style="font-size:32px;font-weight:700;color:var(--track-vision);">{{ project_count }}</div>
+            <div class="stat-label" style="font-size:13px;color:var(--text-secondary);margin-top:4px;">招商项目</div>
+            <div class="stat-sub" style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">洽谈/签约/落地/投产</div>
+        </div>
+    </div>
+
+    <!-- 最近动态 -->
+    <div class="grid-2" style="margin-top:28px;">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-megaphone"></i> 最新采购需求</div>
+            <div class="card-body" style="padding:0;">
+                {% for d in recent_demands %}
+                <a href="/supplier-zone/demand/{{ d.id }}" style="display:block;padding:10px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                    <div class="small fw-600">{{ d.title }}</div>
+                    <div class="d-flex gap-2 mt-1">
+                        <span class="small" style="color:var(--text-tertiary);">{{ d.chain_company.name if d.chain_company else '-' }}</span>
+                        {% if d.amount_estimate %}<span class="small" style="color:var(--error);">{{ d.amount_estimate }}</span>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning-charge"></i> 最近对接响应</div>
+            <div class="card-body" style="padding:0;">
+                {% for r in recent_responses %}
+                <div style="padding:10px 16px;border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                    <div class="small fw-600">{{ r.company_name }}</div>
+                    <div class="d-flex gap-2 mt-1">
+                        <span class="small" style="color:var(--text-tertiary);">响应了 {{ r.demand.title[:20] if r.demand else '-' }}...</span>
+                        <span class="badge {{ 'badge-success' if r.status=='approved' else 'badge-warning' if r.status=='pending' else 'badge-info' }}" style="font-size:10px;">
+                            {{ '已通过' if r.status=='approved' else '待审核' if r.status=='pending' else '审核中' }}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center" style="padding:20px;color:var(--text-tertiary);">暂无响应记录</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- 长株潭产业密度热力图 -->
 <section class="portal-section">
     <h2>长株潭产业密度热力</h2>

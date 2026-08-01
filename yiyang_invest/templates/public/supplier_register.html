@@ -1,0 +1,129 @@
+{% extends "public_base.html" %}
+{% block title %}供应商入驻 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-section">
+    <div style="max-width:700px;margin:0 auto;">
+        <h2 style="text-align:center;margin-bottom:8px;">供应商企业入驻</h2>
+        <p class="section-desc" style="text-align:center;">注册后您的企业信息将进入供应商池，链主企业可搜索到您</p>
+
+        <div class="card" style="margin-top:28px;">
+            <div class="card-body" style="padding:28px;">
+                <form method="post">
+                    <h5 style="font-size:14px;color:var(--text-tertiary);margin-bottom:12px;"><i class="bi bi-building"></i> 企业信息</h5>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="form-label">企业名称 <span class="text-danger">*</span></label>
+                                <input type="text" name="company_name" class="form-control" required placeholder="请输入企业全称">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">企业规模</label>
+                                <select name="scale" class="form-control">
+                                    <option value="">-- 选择 --</option>
+                                    {% for s in scales %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">所属赛道 <span class="text-danger">*</span></label>
+                                <select name="industry_track" class="form-control" required>
+                                    <option value="">-- 选择 --</option>
+                                    {% for t in tracks %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">年营收</label>
+                                <input type="text" name="annual_revenue" class="form-control" placeholder="如：5000万元">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">员工人数</label>
+                                <input type="number" name="employee_count" class="form-control" placeholder="如：200">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">所在城市</label>
+                                <input type="text" name="city" class="form-control" placeholder="如：深圳">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">区/县</label>
+                                <input type="text" name="district" class="form-control" placeholder="如：南山区">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">详细地址</label>
+                                <input type="text" name="address" class="form-control" placeholder="详细地址">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">官网</label>
+                                <input type="text" name="website" class="form-control" placeholder="https://www.example.com">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">优势标签（逗号分隔）</label>
+                                <input type="text" name="advantage_tags" class="form-control" placeholder="如：车规级,ISO9001,10年经验">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 style="font-size:14px;color:var(--text-tertiary);margin:20px 0 12px;"><i class="bi bi-box-seam"></i> 能力展示</h5>
+                    <div class="form-group">
+                        <label class="form-label">主营产品/服务</label>
+                        <textarea name="products_services" class="form-control" rows="3" placeholder="描述贵司的主营产品线和服务能力，链主企业将据此搜索匹配..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">企业简介</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="简要介绍企业发展历程、核心竞争力和行业地位..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">资质证书</label>
+                        <textarea name="certifications" class="form-control" rows="2" placeholder="如：ISO9001质量管理体系、IATF16949汽车行业认证、国家级高新技术企业..."></textarea>
+                    </div>
+
+                    <h5 style="font-size:14px;color:var(--text-tertiary);margin:20px 0 12px;"><i class="bi bi-person"></i> 联系人信息</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">联系人</label>
+                                <input type="text" name="contact_person" class="form-control" placeholder="姓名">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">联系电话</label>
+                                <input type="text" name="contact_phone" class="form-control" placeholder="手机号">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">邮箱</label>
+                                <input type="email" name="contact_email" class="form-control" placeholder="company@example.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center;margin-top:24px;">
+                        <button type="submit" class="btn btn-primary" style="color:#fff;padding:10px 40px;">
+                            <i class="bi bi-check-lg"></i> 提交入驻申请
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

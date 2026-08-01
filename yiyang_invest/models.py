@@ -102,6 +102,11 @@ class Company(db.Model):
     contact_email = db.Column(db.String(100))
     website = db.Column(db.String(200))
     description = db.Column(db.Text)
+    certifications = db.Column(db.Text)             # 资质证书
+    products_services = db.Column(db.Text)          # 主营产品/服务
+    annual_revenue = db.Column(db.String(50))       # 年营收
+    employee_count = db.Column(db.Integer)          # 员工数
+    advantage_tags = db.Column(db.String(300))      # 优势标签，逗号分隔
     tianyancha_id = db.Column(db.String(50))       # 天眼查企业ID
     status = db.Column(db.String(20), default='active')  # active/inactive
     is_chain_leader = db.Column(db.Boolean, default=False)  # 是否链主企业

@@ -181,9 +181,39 @@ def public_index():
     settled = Company.query.filter_by(company_type='settled', status='active').count()
     projects = Project.query.count()
 
+    # 平台实时数据
+    demand_count = ProcurementDemand.query.filter_by(status='open').count()
+    supplier_count = Company.query.filter(
+        Company.company_type.in_(['target', 'supplier']),
+        Company.is_chain_leader == False,
+        Company.status == 'active'
+    ).count()
+    response_count = DemandResponse.query.count()
+
+    # 采购总额
+    from sqlalchemy import func
+    total_demand_amount = 0
+    for d in ProcurementDemand.query.filter_by(status='open').all():
+        if d.amount_estimate:
+            import re
+            nums = re.findall(r'[\d.]+', d.amount_estimate.replace(',', ''))
+            if nums:
+                total_demand_amount += float(nums[0])
+
+    # 最近动态
+    recent_responses = DemandResponse.query.order_by(
+        DemandResponse.created_at.desc()).limit(4).all()
+    recent_demands = ProcurementDemand.query.filter_by(status='open').order_by(
+        ProcurementDemand.published_at.desc()).limit(3).all()
+
     return render_template('public/index.html',
                            park=park, articles=articles, chains=chains,
-                           settled_count=settled, project_count=projects)
+                           settled_count=settled, project_count=projects,
+                           demand_count=demand_count, supplier_count=supplier_count,
+                           response_count=response_count,
+                           total_demand_amount=int(total_demand_amount),
+                           recent_responses=recent_responses,
+                           recent_demands=recent_demands)
 
 
 @app.route('/industry')
@@ -349,6 +379,97 @@ def api_response_update(response_id):
         resp.reviewed_at = datetime.utcnow().strftime('%Y-%m-%d')
     db.session.commit()
     return jsonify({'ok': True, 'response': resp.to_dict()})
+
+
+# ==================== 供应商企业池 ====================
+@app.route('/suppliers')
+def public_suppliers():
+    """供应商企业目录 — 可搜索、筛选"""
+    track = request.args.get('track', '')
+    search = request.args.get('search', '').strip()
+    scale = request.args.get('scale', '')
+
+    query = Company.query.filter(
+        Company.company_type.in_(['target', 'supplier']),
+        Company.status == 'active'
+    ).filter(Company.is_chain_leader == False)
+
+    if track:
+        query = query.filter_by(industry_track=track)
+    if scale:
+        query = query.filter_by(scale=scale)
+    if search:
+        query = query.filter(
+            db.or_(Company.name.contains(search),
+                   Company.products_services.contains(search),
+                   Company.advantage_tags.contains(search))
+        )
+
+    suppliers = query.order_by(Company.created_at.desc()).all()
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    scales = ['大型', '中型', '小型', '初创']
+    return render_template('public/suppliers.html',
+                           suppliers=suppliers, tracks=tracks, scales=scales,
+                           current_track=track, current_scale=scale, search=search)
+
+
+@app.route('/supplier/<int:company_id>')
+def public_supplier_detail(company_id):
+    """供应商企业详情页"""
+    supplier = db.session.get(Company, company_id)
+    if not supplier:
+        return "企业不存在", 404
+
+    # 匹配相关采购需求
+    related_demands = ProcurementDemand.query.filter(
+        ProcurementDemand.industry_track == supplier.industry_track,
+        ProcurementDemand.status == 'open'
+    ).limit(5).all()
+
+    # 同赛道链主
+    chain_leaders = Company.query.filter(
+        Company.is_chain_leader == True,
+        Company.industry_track == supplier.industry_track
+    ).limit(4).all()
+
+    return render_template('public/supplier_detail.html',
+                           supplier=supplier,
+                           related_demands=related_demands,
+                           chain_leaders=chain_leaders)
+
+
+@app.route('/supplier-register', methods=['GET', 'POST'])
+def public_supplier_register():
+    """供应商自主注册入驻"""
+    if request.method == 'POST':
+        company = Company(
+            name=request.form.get('company_name', '').strip(),
+            company_type='supplier',
+            industry_track=request.form.get('industry_track', ''),
+            scale=request.form.get('scale', ''),
+            city=request.form.get('city', ''),
+            district=request.form.get('district', ''),
+            address=request.form.get('address', ''),
+            contact_person=request.form.get('contact_person', ''),
+            contact_phone=request.form.get('contact_phone', ''),
+            contact_email=request.form.get('contact_email', ''),
+            website=request.form.get('website', ''),
+            description=request.form.get('description', ''),
+            certifications=request.form.get('certifications', ''),
+            products_services=request.form.get('products_services', ''),
+            annual_revenue=request.form.get('annual_revenue', ''),
+            employee_count=request.form.get('employee_count', type=int) or 0,
+            advantage_tags=request.form.get('advantage_tags', ''),
+            status='active',
+        )
+        db.session.add(company)
+        db.session.commit()
+        flash('注册成功！您的企业信息已加入供应商池，链主企业可搜索到您。', 'success')
+        return redirect(url_for('public_supplier_detail', company_id=company.id))
+
+    tracks = ['智能感知', '工业视觉', '装备智能', '算力配套']
+    scales = ['大型', '中型', '小型', '初创']
+    return render_template('public/supplier_register.html', tracks=tracks, scales=scales)
 
 
 # ==================== 下游应用商专区 ====================

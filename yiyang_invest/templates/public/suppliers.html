@@ -1,0 +1,74 @@
+{% extends "public_base.html" %}
+{% block title %}供应商企业池 — 益阳高新区智慧招商{% endblock %}
+
+{% block content %}
+<section class="portal-hero" style="padding:48px 24px;">
+    <h1 style="font-size:28px;">供应商企业池</h1>
+    <p>已注册的优质供应商 — 链主企业可搜索浏览潜在合作伙伴</p>
+</section>
+
+<section class="portal-section">
+    <!-- 搜索+筛选 -->
+    <div class="filter-bar" style="margin-bottom:24px;">
+        <form method="get" class="d-flex gap-2 flex-wrap" style="width:100%;">
+            <input type="text" name="search" class="form-control" placeholder="搜索企业名/产品/标签" value="{{ search }}" style="max-width:260px;">
+            <select name="track" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                <option value="">全部赛道</option>
+                {% for t in tracks %}
+                <option value="{{ t }}" {% if current_track==t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+            <select name="scale" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                <option value="">全部规模</option>
+                {% for s in scales %}
+                <option value="{{ s }}" {% if current_scale==s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+            <a href="/suppliers" class="btn btn-outline btn-sm">重置</a>
+            <span style="flex:1;"></span>
+            <a href="/supplier-register" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> 注册入驻</a>
+        </form>
+    </div>
+
+    <!-- 供应商列表 -->
+    <div class="grid-2">
+        {% for s in suppliers %}
+        <a href="/supplier/{{ s.id }}" style="text-decoration:none;color:inherit;">
+            <div class="card" style="border-left:3px solid var(--success);">
+                <div class="card-body" style="padding:20px;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h4 class="fw-600" style="font-size:15px;margin:0;">{{ s.name }}</h4>
+                        <span class="badge badge-track-{{ 'sense' if s.industry_track=='智能感知' else 'vision' if s.industry_track=='工业视觉' else 'equip' if s.industry_track=='装备智能' else 'compute' if s.industry_track=='算力配套' else 'neutral' }}" style="font-size:11px;">{{ s.industry_track or '-' }}</span>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        {% if s.scale %}<span class="badge badge-neutral">{{ s.scale }}</span>{% endif %}
+                        {% if s.city %}<span class="badge badge-neutral">{{ s.city }}</span>{% endif %}
+                        {% if s.employee_count %}<span class="badge badge-neutral">{{ s.employee_count }}人</span>{% endif %}
+                    </div>
+                    {% if s.products_services %}
+                    <p class="small text-secondary" style="line-height:1.6;">
+                        <strong>主营：</strong>{{ s.products_services[:80] }}{% if s.products_services|length > 80 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    {% if s.advantage_tags %}
+                    <div class="d-flex gap-1 flex-wrap mt-2">
+                        {% for tag in s.advantage_tags.split(',') %}
+                        {% if tag.strip() %}<span class="badge badge-success" style="font-size:10px;">{{ tag.strip() }}</span>{% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="text-right mt-2"><span style="color:var(--accent);font-size:12px;">查看详情 →</span></div>
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="text-center" style="padding:60px;grid-column:1/-1;color:var(--text-tertiary);">
+            <i class="bi bi-people" style="font-size:48px;"></i>
+            <p class="mt-2">暂无供应商</p>
+            <a href="/supplier-register" class="btn btn-primary btn-sm mt-2">成为首家入驻供应商</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
